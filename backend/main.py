@@ -31,6 +31,8 @@ load_dotenv()
 if sys.stdout.encoding != 'utf-8':
     sys.stdout.reconfigure(encoding='utf-8')
 
+from contextlib import asynccontextmanager
+
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, UploadFile, File
@@ -52,32 +54,13 @@ from llm_explanation import generate_explanation, generate_batch_explanation
 
 
 # ----------------------------------------------
-# App Init
+# Startup / Lifespan
 # ----------------------------------------------
-app = FastAPI(title="The Drifting Oracle API")
-
-FRONTEND_ORIGINS = os.getenv(
-    "FRONTEND_ORIGINS",
-    "http://localhost:5173,http://127.0.0.1:5173",
-).split(",")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=FRONTEND_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-# ----------------------------------------------
-# Startup
-# ----------------------------------------------
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     """
     Initialize all models, feature orders, and baseline distributions.
-    Called automatically when the server starts.
+    Runs once when the server starts, before it accepts any requests.
     """
     # 1. Load feature order from features.txt
     load_feature_order()
@@ -126,6 +109,27 @@ async def startup_event():
             f"{type(config.GERMAN_MODEL).__name__})",
             "challenger",
         )
+
+    yield  # server runs here -- nothing needed on shutdown
+
+
+# ----------------------------------------------
+# App Init
+# ----------------------------------------------
+app = FastAPI(title="The Drifting Oracle API", lifespan=lifespan)
+
+FRONTEND_ORIGINS = os.getenv(
+    "FRONTEND_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173",
+).split(",")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=FRONTEND_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # ----------------------------------------------
@@ -206,7 +210,7 @@ async def predict(data: PredictRequest):
     if config.MODEL is None:
         return {"status": "failed", "error": "Model not loaded"}
 
-    input_dict = data.dict()
+    input_dict = data.model_dump()
 
     # Create a single-row DataFrame
     input_df = pd.DataFrame([input_dict])
@@ -309,6 +313,10 @@ async def predict_batch(file: UploadFile = File(...)):
     # -- Step 1: Parse CSV ----------------------
     try:
         df = pd.read_csv(file.file)
+    except pd.errors.EmptyDataError:
+        # A genuinely empty file raises here -- pandas never gets far enough
+        # to hand back a DataFrame for the df.empty check below to catch.
+        return {"status": "failed", "error": "CSV file is empty."}
     except Exception as e:
         return {"status": "failed", "error": f"Invalid CSV file: {str(e)}"}
 

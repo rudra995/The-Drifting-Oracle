@@ -7,7 +7,7 @@ Architecture:
   - No rolling window -- each batch is compared against the training distribution
   - Model switching: PSI < 0.25 -> Champion, else -> Challenger
 """
-from datetime import datetime
+from datetime import datetime, timezone
 
 import databricks_io
 
@@ -124,7 +124,7 @@ RETRAIN_IN_PROGRESS: bool = False
 def log_governance_event(event_type: str, details: str, model_id: str = None):
     """Append a governance event to the in-memory log and persist it to Delta."""
     GOVERNANCE_LOG.insert(0, {
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "event_type": event_type,
         "details": details,
         "model_id": model_id,
@@ -140,7 +140,7 @@ def log_drift_detection(overall_psi: float, per_feature: dict, drift_detected: b
         else "No action required -- data distribution stable."
     )
     DRIFT_HISTORY.insert(0, {
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "overall_psi": overall_psi,
         "drift_detected": drift_detected,
         "drift_features": [
@@ -156,9 +156,8 @@ def log_llm_evaluation(explanation: str, llm_used: str, probability: float = Non
     """
     Log an LLM-generated explanation for evaluation and monitoring using semantic embedding auditing.
     """
-    from datetime import datetime
     import config
-    
+
     # Fast fallback if explanation errored gracefully before LLM
     if llm_used == "fallback_error":
         eval_result = {
@@ -184,7 +183,7 @@ def log_llm_evaluation(explanation: str, llm_used: str, probability: float = Non
             }
         
     eval_record = {
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "explanation": explanation[:200],  # First 200 chars for display
         "llm_used": llm_used,
         "factual_grounding_score": eval_result["grounding_score"],

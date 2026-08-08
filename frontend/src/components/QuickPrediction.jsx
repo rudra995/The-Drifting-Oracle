@@ -79,8 +79,6 @@ export default function QuickPrediction({ onPredictionResult }) {
     { key: 'FLAG_OWN_REALTY_Y', label: 'Owns Real Estate (1/0)', type: 'number', group: 'Assets' },
   ];
 
-  const groups = ['Financials', 'Demographics', 'Employment', 'Risk Scores', 'Geography', 'Assets'];
-
   return (
     <motion.section
       initial={{ opacity: 0, y: 20 }}

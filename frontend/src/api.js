@@ -35,7 +35,7 @@ export async function fetchApi(endpoint, options = {}) {
   let response;
   try {
     response = await fetch(url, config);
-  } catch (networkError) {
+  } catch {
     throw new Error(`Missing endpoint: ${endpoint}`);
   }
 

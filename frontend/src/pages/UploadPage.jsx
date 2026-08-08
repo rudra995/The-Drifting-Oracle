@@ -474,7 +474,7 @@ export default function UploadPage() {
  )}
  </h3>
  <p className="text-on-surface leading-relaxed italic">
- "{uploadResult.explanation}"
+ &ldquo;{uploadResult.explanation}&rdquo;
  </p>
  </div>
  </div>

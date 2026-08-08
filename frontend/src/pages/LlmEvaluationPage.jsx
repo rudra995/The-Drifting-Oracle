@@ -197,7 +197,7 @@ export default function LlmEvaluationPage() {
  {latestRejection ? (
  <div className="space-y-4">
  <div className="bg-surface-container-highest/50 p-4 rounded-xl border border-outline-variant/10">
- <p className="text-sm text-on-surface italic leading-relaxed">"{latestRejection.explanation}"</p>
+ <p className="text-sm text-on-surface italic leading-relaxed">&ldquo;{latestRejection.explanation}&rdquo;</p>
  </div>
  <div className="flex gap-4 text-xs font-mono font-bold tracking-wider">
  <span className="glass-panel px-3 py-1.5 rounded text-outline border-outline-variant/20">Grounding: <strong className="text-tertiary">{((latestRejection.factual_grounding_score || 0) * 100).toFixed(0)}%</strong></span>
@@ -269,7 +269,7 @@ export default function LlmEvaluationPage() {
  {row.timestamp}
  </td>
  <td className="px-6 py-4 text-sm text-on-surface leading-loose">
- <span className="font-medium text-[13px] italic">"{row.explanation}"</span>
+ <span className="font-medium text-[13px] italic">&ldquo;{row.explanation}&rdquo;</span>
  </td>
  <td className="px-6 py-4">
  <div className="flex flex-col gap-2 font-mono">

@@ -4,7 +4,6 @@ import { CheckCircle, AlertTriangle, TrendingUp, Zap, Brain, Activity } from 'lu
 export default function PredictionResults({ result }) {
   if (!result) return null;
 
-  const isHighRisk = result.probability >= 0.7;
   const isApproved = result.decision === 'Accept Loan';
 
   return (
@@ -67,7 +66,7 @@ export default function PredictionResults({ result }) {
               </span>
             </h3>
             <p className="text-on-surface leading-relaxed italic">
-              "{result.explanation}"
+              &ldquo;{result.explanation}&rdquo;
             </p>
           </div>
         </div>
