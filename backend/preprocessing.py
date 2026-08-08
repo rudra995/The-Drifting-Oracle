@@ -98,13 +98,16 @@ def prepare_champion_input(df: pd.DataFrame) -> pd.DataFrame:
 #  Challenger Model: Feature Mapping
 # --------------------------------------------
 
-def prepare_challenger_input(df: pd.DataFrame) -> pd.DataFrame:
+def engineer_challenger_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     Map Home Credit columns to the German model's 8-feature schema.
-    
+    Shared by both the serving path (prepare_challenger_input, reordered to
+    match the currently-loaded model) and the training script (which fits a
+    fresh model and lets it define its own canonical column order).
+
     Challenger expects: Age, Income, CreditScore, LoanAmount, DTI,
                         EmploymentYears, income_loan_ratio, loan_dti_ratio
-    
+
     Mapping:
       Income            AMT_INCOME_TOTAL
       LoanAmount        AMT_CREDIT_x
@@ -171,8 +174,16 @@ def prepare_challenger_input(df: pd.DataFrame) -> pd.DataFrame:
 
     # Fill remaining NaN
     mapped = mapped.fillna(0.0)
+    return mapped
 
-    # Reorder to match model's expected feature order
+
+def prepare_challenger_input(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Build the 8-feature Challenger matrix and reorder it to match the
+    currently-loaded Challenger model's expected column order.
+    """
+    mapped = engineer_challenger_features(df)
+
     challenger_order = list(config.GERMAN_MODEL.feature_names_in_)
     for feat in challenger_order:
         if feat not in mapped.columns:

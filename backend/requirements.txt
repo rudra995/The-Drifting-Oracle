@@ -10,3 +10,7 @@ google-genai
 requests
 sentence-transformers
 torch
+mlflow
+
+# Dev-only: for scripts/train.py's one-time raw data download from Kaggle
+kaggle

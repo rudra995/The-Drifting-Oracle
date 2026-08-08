@@ -12,6 +12,10 @@ venv/
 
 # Large data files (regenerate locally per README instructions)
 backend/dataset/cleaned_data.csv
+backend/dataset/raw/
+
+# Local model backups made by scripts/train.py before overwriting Models/*.pkl
+backend/Models/*.bak-*
 
 # Reference docs kept out of the public repo
 /Hackathon_Problem_Statement.pdf
