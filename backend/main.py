@@ -38,6 +38,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import config
 import databricks_io
+import retrain
 from model_loader import load_feature_order, load_model
 from psi import build_baseline_distributions, calculate_multi_feature_psi
 from preprocessing import (
@@ -375,6 +376,7 @@ async def predict_batch(file: UploadFile = File(...)):
             f"Switched to {model_used} model.",
             model_used,
         )
+        retrain.maybe_trigger_retrain()
 
     # -- Step 8: Compute Summary Statistics (before LLM explanation) ----
     probabilities = [p["probability"] for p in predictions]

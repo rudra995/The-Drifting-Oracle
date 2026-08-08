@@ -79,6 +79,13 @@ DRIFT_HISTORY: list[dict] = []
 GOVERNANCE_LOG: list[dict] = []
 LLM_EVALUATIONS: list[dict] = []
 
+# --------------------------------------------
+# Retraining State (Phase 2 -- drift-triggered retrain)
+# --------------------------------------------
+LAST_RETRAIN_TRIGGERED_AT: float = 0.0
+RETRAIN_COOLDOWN_SECONDS: int = 600  # 10 min -- don't spawn a retrain per drifted batch
+RETRAIN_IN_PROGRESS: bool = False
+
 
 def log_governance_event(event_type: str, details: str, model_id: str = None):
     """Append a governance event to the in-memory log and persist it to Delta."""
