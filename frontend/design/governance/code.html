@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Governance - Drifting Oracle</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#cad5ed",
+                        "secondary-container": "#d3e4fe",
+                        "on-primary-fixed": "#354053",
+                        "on-secondary-container": "#435368",
+                        "error-dim": "#4e0309",
+                        "surface": "#f7f9fb",
+                        "surface-container-highest": "#d9e4ea",
+                        "primary": "#545f73",
+                        "surface-dim": "#cfdce3",
+                        "inverse-primary": "#dae6fe",
+                        "on-secondary": "#f7f9ff",
+                        "tertiary": "#006592",
+                        "primary-dim": "#485367",
+                        "secondary-dim": "#44546a",
+                        "outline-variant": "#a9b4b9",
+                        "on-error-container": "#752121",
+                        "on-tertiary": "#f5f9ff",
+                        "primary-container": "#d8e3fb",
+                        "secondary": "#506076",
+                        "tertiary-dim": "#005980",
+                        "surface-container-high": "#e1e9ee",
+                        "on-primary-fixed-variant": "#515c70",
+                        "on-surface": "#2a3439",
+                        "on-error": "#fff7f6",
+                        "on-background": "#2a3439",
+                        "on-tertiary-container": "#003047",
+                        "error-container": "#fe8983",
+                        "on-primary": "#f6f7ff",
+                        "on-surface-variant": "#566166",
+                        "surface-variant": "#d9e4ea",
+                        "tertiary-fixed": "#34b5fa",
+                        "on-tertiary-fixed": "#00121e",
+                        "outline": "#717c82",
+                        "background": "#f7f9fb",
+                        "on-secondary-fixed": "#314055",
+                        "on-secondary-fixed-variant": "#4d5d73",
+                        "secondary-fixed-dim": "#c5d6f0",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#17a8ec",
+                        "on-tertiary-fixed-variant": "#003954",
+                        "error": "#9f403d",
+                        "primary-fixed": "#d8e3fb",
+                        "secondary-fixed": "#d3e4fe",
+                        "inverse-on-surface": "#9a9d9f",
+                        "tertiary-container": "#34b5fa",
+                        "inverse-surface": "#0b0f10",
+                        "surface-container-low": "#f0f4f7",
+                        "surface-tint": "#545f73",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container": "#e8eff3",
+                        "on-primary-container": "#475266"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-manrope { font-family: 'Manrope', sans-serif; }
+        .oracle-glow { background: linear-gradient(135deg, #545f73 0%, #d8e3fb 100%); }
+        .glass-panel { backdrop-filter: blur(24px); }
+        .ghost-border { border-color: rgba(169, 180, 185, 0.1); }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopNavBar -->
+<nav class="bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm dark:shadow-none flex justify-between items-center w-full px-8 py-4 border-b border-slate-200/20 dark:border-slate-800/20">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold tracking-tighter text-slate-900 dark:text-white font-manrope">Drifting Oracle</span>
+<div class="hidden md:flex gap-6 items-center font-manrope font-semibold tracking-tight">
+<a class="text-slate-500 dark:text-slate-400 pb-2 hover:text-slate-900 dark:hover:text-white transition-colors duration-200 cursor-pointer active:opacity-70" href="#">Dashboard</a>
+<a class="text-slate-500 dark:text-slate-400 pb-2 hover:text-slate-900 dark:hover:text-white transition-colors duration-200 cursor-pointer active:opacity-70" href="#">Model Training</a>
+<a class="text-slate-500 dark:text-slate-400 pb-2 hover:text-slate-900 dark:hover:text-white transition-colors duration-200 cursor-pointer active:opacity-70" href="#">Drift Detection</a>
+<a class="text-slate-500 dark:text-slate-400 pb-2 hover:text-slate-900 dark:hover:text-white transition-colors duration-200 cursor-pointer active:opacity-70" href="#">LLM Evaluation</a>
+<a class="text-slate-900 dark:text-white border-b-2 border-slate-700 dark:border-slate-300 pb-2 hover:text-slate-900 dark:hover:text-white transition-colors duration-200 cursor-pointer active:opacity-70" href="#">Governance</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-300 cursor-pointer">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</div>
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-300 cursor-pointer">settings</span>
+<img alt="Executive User Profile" class="w-8 h-8 rounded-full border border-outline-variant/20" data-alt="professional headshot of an executive user with a clean minimalist background and soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDouE_3J-nlx207YR9O1gWL8v2UPbZyzOmXhJXzJiZkCsEHjPY4rUjknNDXWtHaFmh9x-SyOgbUREQLwd-NgSMHCduw0T2WYYsN3BsOh-R5QnDb_oLB9-0wbZElTAbnUx8JVqLk11yZe3cOkkOJe19Cx0DcA5o0ZEW21sSu8INxZx3bus7oWCKbSTCyOE1Dj5mw6uckPlb9Z1Nd4zVw8WAlf4jEALRf4u0LyJiRd2xAgkb8Zs3i_PkA8c1wEFtSIKm038uCd46M0r8"/>
+</div>
+</nav>
+<main class="max-w-[1600px] mx-auto px-8 py-10 space-y-8">
+<!-- Headline Section -->
+<header class="flex justify-between items-end">
+<div>
+<h1 class="text-4xl font-headline font-bold text-on-surface tracking-tight mb-2">Governance Oversight</h1>
+<p class="text-on-surface-variant font-label text-sm uppercase tracking-widest font-medium">Compliance &amp; Audit Integrity Ledger</p>
+</div>
+<button class="oracle-glow text-white px-6 py-2.5 rounded-xl font-headline font-semibold flex items-center gap-2 shadow-lg hover:opacity-90 transition-all">
+<span class="material-symbols-outlined text-[20px]">refresh</span>
+                Refresh Log
+            </button>
+</header>
+<!-- Summary Stats Bar -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+<!-- Stat 1 -->
+<div class="bg-surface-container-low p-5 rounded-xl flex flex-col justify-between">
+<span class="text-on-surface-variant text-xs font-label font-bold uppercase tracking-tighter">Total Models</span>
+<div class="mt-4">
+<span class="text-2xl font-headline font-bold text-on-surface">1,248</span>
+<div class="h-1.5 w-full bg-surface-container-highest mt-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[85%]"></div>
+</div>
+</div>
+</div>
+<!-- Stat 2 -->
+<div class="bg-surface-container-low p-5 rounded-xl flex flex-col justify-between">
+<span class="text-on-surface-variant text-xs font-label font-bold uppercase tracking-tighter">Drift Detections</span>
+<div class="mt-4">
+<span class="text-2xl font-headline font-bold text-on-surface">42</span>
+<div class="h-1.5 w-full bg-surface-container-highest mt-2 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full w-[12%]"></div>
+</div>
+</div>
+</div>
+<!-- Stat 3 -->
+<div class="bg-surface-container-low p-5 rounded-xl flex flex-col justify-between">
+<span class="text-on-surface-variant text-xs font-label font-bold uppercase tracking-tighter">Drift Rate %</span>
+<div class="mt-4">
+<span class="text-2xl font-headline font-bold text-error">3.4%</span>
+<div class="h-1.5 w-full bg-surface-container-highest mt-2 rounded-full overflow-hidden">
+<div class="bg-error h-full w-[34%]"></div>
+</div>
+</div>
+</div>
+<!-- Stat 4 -->
+<div class="bg-surface-container-low p-5 rounded-xl flex flex-col justify-between">
+<span class="text-on-surface-variant text-xs font-label font-bold uppercase tracking-tighter">Total LLM Evals</span>
+<div class="mt-4">
+<span class="text-2xl font-headline font-bold text-on-surface">18.5k</span>
+<div class="h-1.5 w-full bg-surface-container-highest mt-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[70%]"></div>
+</div>
+</div>
+</div>
+<!-- Stat 5 -->
+<div class="bg-surface-container-low p-5 rounded-xl flex flex-col justify-between">
+<span class="text-on-surface-variant text-xs font-label font-bold uppercase tracking-tighter">Hallucination Rate %</span>
+<div class="mt-4">
+<span class="text-2xl font-headline font-bold text-tertiary">0.82%</span>
+<div class="h-1.5 w-full bg-surface-container-highest mt-2 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full w-[8%]"></div>
+</div>
+</div>
+</div>
+<!-- Stat 6 -->
+<div class="bg-surface-container-low p-5 rounded-xl flex flex-col justify-between">
+<span class="text-on-surface-variant text-xs font-label font-bold uppercase tracking-tighter">Total Governance Events</span>
+<div class="mt-4">
+<span class="text-2xl font-headline font-bold text-on-surface">842</span>
+<div class="h-1.5 w-full bg-surface-container-highest mt-2 rounded-full overflow-hidden">
+<div class="bg-primary-dim h-full w-[100%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Filter Bar -->
+<div class="flex items-center justify-between gap-4 py-2 border-b ghost-border">
+<div class="flex items-center gap-2">
+<button class="bg-primary text-on-primary px-5 py-2 rounded-full text-xs font-label font-bold tracking-tight">ALL</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full text-xs font-label font-bold tracking-tight transition-all">MODEL_TRAINED</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full text-xs font-label font-bold tracking-tight transition-all">DRIFT_ALERT</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full text-xs font-label font-bold tracking-tight transition-all">EVAL_COMPLETED</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full text-xs font-label font-bold tracking-tight transition-all">ACCESS_CHANGE</button>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="bg-surface-container-highest border-none rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 w-64" placeholder="Search event history..." type="text"/>
+</div>
+<button class="flex items-center gap-2 text-on-surface-variant text-sm font-label hover:text-primary">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+                    Advanced Filters
+                </button>
+</div>
+</div>
+<!-- Audit Event Log Table -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high">
+<th class="px-6 py-4 text-xs font-label font-bold uppercase tracking-widest text-on-surface-variant">Timestamp</th>
+<th class="px-6 py-4 text-xs font-label font-bold uppercase tracking-widest text-on-surface-variant">Event Type</th>
+<th class="px-6 py-4 text-xs font-label font-bold uppercase tracking-widest text-on-surface-variant">Details</th>
+<th class="px-6 py-4 text-xs font-label font-bold uppercase tracking-widest text-on-surface-variant">Initiator</th>
+<th class="px-6 py-4 text-xs font-label font-bold uppercase tracking-widest text-on-surface-variant text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y ghost-border">
+<!-- Row 1 -->
+<tr class="hover:bg-primary-container/30 transition-colors cursor-default">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-on-surface font-semibold text-sm">Oct 24, 2023</span>
+<span class="text-on-surface-variant text-xs">14:22:15 UTC</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="bg-error/10 text-error px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter inline-flex items-center gap-1">
+<span class="w-1 h-1 bg-error rounded-full"></span>
+                                Drift Alert
+                            </span>
+</td>
+<td class="px-6 py-5">
+<div class="max-w-md">
+<span class="text-on-surface font-medium text-sm block">Critical Drift detected in 'Customer_Churn_v4'</span>
+<span class="text-on-surface-variant text-xs truncate block">PSI &gt; 0.25 on feature 'average_spend_monthly'</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-primary-container text-primary flex items-center justify-center text-[10px] font-bold">OS</div>
+<span class="text-on-surface-variant text-xs">Oracle System</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-on-surface">chevron_right</span>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="bg-surface-container-low hover:bg-primary-container/30 transition-colors cursor-default">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-on-surface font-semibold text-sm">Oct 24, 2023</span>
+<span class="text-on-surface-variant text-xs">13:45:02 UTC</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="bg-tertiary/10 text-tertiary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter inline-flex items-center gap-1">
+<span class="w-1 h-1 bg-tertiary rounded-full"></span>
+                                Model Trained
+                            </span>
+</td>
+<td class="px-6 py-5">
+<div class="max-w-md">
+<span class="text-on-surface font-medium text-sm block">Retraining complete: 'Fraud_Detection_Main'</span>
+<span class="text-on-surface-variant text-xs truncate block">Epochs: 150 | Validation F1: 0.942</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<img alt="User" class="w-6 h-6 rounded-full" data-alt="profile icon of an engineer with a neutral expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjH-_Ywo8B_fxOovWPKfxDZ2HP4OOb_cWN5yj1iMtpeeIg6TN8sdXfS0kP9cYDvNHJEe0jaNWMulo4johQNTH50FrRYXJWxjv9CA5iBMhWK2BX9L3lqcJ--ec0R6U4wZHYsQQFVKi5l1qlR14L97APgxThiWBWLG8x8s-BwYnMfg2FlfDiuWtORcHqu7SHPEw6D4E8rd4QM_lR1FHpReCjCQMQhTWOYyk_W9sd3vLmEnk43nOcv7u-P4E_hlaJ9HSk99I2238b4xs"/>
+<span class="text-on-surface-variant text-xs">alex.rivera@corp.com</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-on-surface">chevron_right</span>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-primary-container/30 transition-colors cursor-default">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-on-surface font-semibold text-sm">Oct 24, 2023</span>
+<span class="text-on-surface-variant text-xs">11:10:55 UTC</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter inline-flex items-center gap-1">
+<span class="w-1 h-1 bg-primary rounded-full"></span>
+                                Access Change
+                            </span>
+</td>
+<td class="px-6 py-5">
+<div class="max-w-md">
+<span class="text-on-surface font-medium text-sm block">Permissions escalated for 'Analyst_Group_B'</span>
+<span class="text-on-surface-variant text-xs truncate block">Added 'write' access to drift_evaluation_pipelines</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<img alt="User" class="w-6 h-6 rounded-full" data-alt="profile icon of a project manager with a calm professional look" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNBVHm2fC2qbsvw5ZZF-GHdWylZMzrEIwVpXRNAoH-2JczbsWUmKAYgQ-jCf5d4fi7wzB4YPxiOHA4ZFmRx45QZjUxNDMOjDtgTTo7O1quRNtRuot-u2WLYiiepO89Kes5-yiecm8YCo5oodMaIcAiVmCvP5awTwsD2E64vvuz5BEmFyafZGu6m4d-naCRGEFE-Y_Ok1_im2EaKddbGsl9xwFED47vrr0FzDf9odv8yauz3l9MpGY7vuFU9Q56TBG1yByFh9XL8dI"/>
+<span class="text-on-surface-variant text-xs">sarah.chen@corp.com</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-on-surface">chevron_right</span>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="bg-surface-container-low hover:bg-primary-container/30 transition-colors cursor-default">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-on-surface font-semibold text-sm">Oct 23, 2023</span>
+<span class="text-on-surface-variant text-xs">23:59:59 UTC</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="bg-tertiary-fixed/10 text-tertiary-dim px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter inline-flex items-center gap-1">
+<span class="w-1 h-1 bg-tertiary-fixed rounded-full"></span>
+                                Eval Completed
+                            </span>
+</td>
+<td class="px-6 py-5">
+<div class="max-w-md">
+<span class="text-on-surface font-medium text-sm block">LLM Hallucination Sweep: 'Customer_Support_GPT4'</span>
+<span class="text-on-surface-variant text-xs truncate block">5,000 samples scanned | Hallucination rate: 0.12%</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-primary-container text-primary flex items-center justify-center text-[10px] font-bold">CR</div>
+<span class="text-on-surface-variant text-xs">Cron Scheduler</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-on-surface">chevron_right</span>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-primary-container/30 transition-colors cursor-default">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-on-surface font-semibold text-sm">Oct 23, 2023</span>
+<span class="text-on-surface-variant text-xs">16:15:30 UTC</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="bg-error/10 text-error px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter inline-flex items-center gap-1">
+<span class="w-1 h-1 bg-error rounded-full"></span>
+                                Critical Alert
+                            </span>
+</td>
+<td class="px-6 py-5">
+<div class="max-w-md">
+<span class="text-on-surface font-medium text-sm block">System Health: Compute Node Failure</span>
+<span class="text-on-surface-variant text-xs truncate block">Node us-east-1b-gpu-84 failed health check</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-error-container/20 text-error flex items-center justify-center text-[10px] font-bold">SY</div>
+<span class="text-on-surface-variant text-xs">System Monitor</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-on-surface">chevron_right</span>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination -->
+<div class="px-6 py-4 bg-surface-container-high flex items-center justify-between">
+<span class="text-on-surface-variant text-xs font-label">Showing <span class="font-bold text-on-surface">1 - 25</span> of 842 events</span>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-highest text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">first_page</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-highest text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<div class="flex gap-1 px-2">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-on-primary font-bold text-xs">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-highest text-on-surface-variant text-xs font-medium">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-highest text-on-surface-variant text-xs font-medium">3</button>
+<span class="w-8 h-8 flex items-center justify-center text-on-surface-variant text-xs">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-highest text-on-surface-variant text-xs font-medium">34</button>
+</div>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-highest text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-highest text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">last_page</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Secondary Insights (Asymmetric Layout) -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="lg:col-span-2 bg-surface-container-low p-8 rounded-xl">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-xl font-headline font-bold text-on-surface">Policy Compliance Trend</h3>
+<p class="text-sm text-on-surface-variant font-label">Governance adherence over the last 30 days</p>
+</div>
+<span class="text-tertiary font-bold text-lg">+12% vs LY</span>
+</div>
+<!-- Mock Chart Area -->
+<div class="h-64 flex items-end gap-2 group">
+<div class="bg-primary/20 w-full h-[60%] rounded-t-sm hover:bg-primary transition-all cursor-pointer"></div>
+<div class="bg-primary/20 w-full h-[65%] rounded-t-sm hover:bg-primary transition-all cursor-pointer"></div>
+<div class="bg-primary/20 w-full h-[72%] rounded-t-sm hover:bg-primary transition-all cursor-pointer"></div>
+<div class="bg-primary/20 w-full h-[68%] rounded-t-sm hover:bg-primary transition-all cursor-pointer"></div>
+<div class="bg-primary/20 w-full h-[80%] rounded-t-sm hover:bg-primary transition-all cursor-pointer"></div>
+<div class="bg-primary/20 w-full h-[85%] rounded-t-sm hover:bg-primary transition-all cursor-pointer"></div>
+<div class="bg-primary/20 w-full h-[92%] rounded-t-sm hover:bg-primary transition-all cursor-pointer"></div>
+<div class="bg-primary/20 w-full h-[88%] rounded-t-sm hover:bg-primary transition-all cursor-pointer"></div>
+<div class="bg-primary/20 w-full h-[95%] rounded-t-sm hover:bg-primary transition-all cursor-pointer"></div>
+<div class="bg-primary w-full h-[98%] rounded-t-sm"></div>
+</div>
+<div class="flex justify-between mt-4 text-[10px] font-label font-bold text-on-surface-variant uppercase tracking-widest">
+<span>Oct 01</span>
+<span>Oct 08</span>
+<span>Oct 15</span>
+<span>Oct 22</span>
+<span>Today</span>
+</div>
+</div>
+<div class="bg-primary-container p-8 rounded-xl flex flex-col justify-between">
+<div>
+<h3 class="text-xl font-headline font-bold text-on-primary-container">Integrity Shield</h3>
+<p class="text-sm text-on-primary-container/70 font-label mt-1">Automatic guardrail enforcement is currently active and protecting 100% of production traffic.</p>
+</div>
+<div class="mt-8 space-y-4">
+<div class="flex items-center justify-between bg-white/20 p-3 rounded-lg">
+<span class="text-sm font-semibold text-on-primary-container">Bias Mitigation</span>
+<span class="material-symbols-outlined text-tertiary">check_circle</span>
+</div>
+<div class="flex items-center justify-between bg-white/20 p-3 rounded-lg">
+<span class="text-sm font-semibold text-on-primary-container">Drift Intervention</span>
+<span class="material-symbols-outlined text-tertiary">check_circle</span>
+</div>
+<div class="flex items-center justify-between bg-white/20 p-3 rounded-lg">
+<span class="text-sm font-semibold text-on-primary-container">Hallucination Trap</span>
+<span class="material-symbols-outlined text-tertiary">check_circle</span>
+</div>
+</div>
+<button class="mt-8 text-on-primary-container font-headline font-bold text-sm underline underline-offset-4 decoration-2 hover:opacity-70 transition-all">
+                    Update Policy Config
+                </button>
+</div>
+</div>
+</main>
+<!-- Decorative Oracle Element -->
+<div class="fixed -bottom-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="fixed -top-24 -left-24 w-96 h-96 bg-tertiary/5 rounded-full blur-[100px] pointer-events-none"></div>
+</body></html>

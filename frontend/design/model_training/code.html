@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Drifting Oracle - Model Training</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#cad5ed",
+                    "secondary-container": "#d3e4fe",
+                    "on-primary-fixed": "#354053",
+                    "on-secondary-container": "#435368",
+                    "error-dim": "#4e0309",
+                    "surface": "#f7f9fb",
+                    "surface-container-highest": "#d9e4ea",
+                    "primary": "#545f73",
+                    "surface-dim": "#cfdce3",
+                    "inverse-primary": "#dae6fe",
+                    "on-secondary": "#f7f9ff",
+                    "tertiary": "#006592",
+                    "primary-dim": "#485367",
+                    "secondary-dim": "#44546a",
+                    "outline-variant": "#a9b4b9",
+                    "on-error-container": "#752121",
+                    "on-tertiary": "#f5f9ff",
+                    "primary-container": "#d8e3fb",
+                    "secondary": "#506076",
+                    "tertiary-dim": "#005980",
+                    "surface-container-high": "#e1e9ee",
+                    "on-primary-fixed-variant": "#515c70",
+                    "on-surface": "#2a3439",
+                    "on-error": "#fff7f6",
+                    "on-background": "#2a3439",
+                    "on-tertiary-container": "#003047",
+                    "error-container": "#fe8983",
+                    "on-primary": "#f6f7ff",
+                    "on-surface-variant": "#566166",
+                    "surface-variant": "#d9e4ea",
+                    "tertiary-fixed": "#34b5fa",
+                    "on-tertiary-fixed": "#00121e",
+                    "outline": "#717c82",
+                    "background": "#f7f9fb",
+                    "on-secondary-fixed": "#314055",
+                    "on-secondary-fixed-variant": "#4d5d73",
+                    "secondary-fixed-dim": "#c5d6f0",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#17a8ec",
+                    "on-tertiary-fixed-variant": "#003954",
+                    "error": "#9f403d",
+                    "primary-fixed": "#d8e3fb",
+                    "secondary-fixed": "#d3e4fe",
+                    "inverse-on-surface": "#9a9d9f",
+                    "tertiary-container": "#34b5fa",
+                    "inverse-surface": "#0b0f10",
+                    "surface-container-low": "#f0f4f7",
+                    "surface-tint": "#545f73",
+                    "surface-bright": "#f7f9fb",
+                    "surface-container": "#e8eff3",
+                    "on-primary-container": "#475266"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .oracle-glow {
+            background: linear-gradient(135deg, #545f73 0%, #d8e3fb 100%);
+        }
+        .glass-panel {
+            background: rgba(240, 244, 247, 0.8);
+            backdrop-filter: blur(24px);
+        }
+        .ghost-border {
+            border: 1px solid rgba(169, 180, 185, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- TopNavBar Shell -->
+<nav class="bg-slate-50/80 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-8 py-4 border-b border-slate-200/20 shadow-sm">
+<div class="flex items-center gap-12">
+<span class="text-2xl font-bold tracking-tighter text-slate-900 font-manrope">Drifting Oracle</span>
+<div class="hidden md:flex gap-8 items-center">
+<a class="font-manrope font-semibold tracking-tight text-slate-500 hover:text-slate-900 transition-colors duration-200 pb-2 cursor-pointer active:opacity-70" href="#">Dashboard</a>
+<a class="font-manrope font-semibold tracking-tight text-slate-900 border-b-2 border-slate-700 pb-2 cursor-pointer active:opacity-70" href="#">Model Training</a>
+<a class="font-manrope font-semibold tracking-tight text-slate-500 hover:text-slate-900 transition-colors duration-200 pb-2 cursor-pointer active:opacity-70" href="#">Drift Detection</a>
+<a class="font-manrope font-semibold tracking-tight text-slate-500 hover:text-slate-900 transition-colors duration-200 pb-2 cursor-pointer active:opacity-70" href="#">LLM Evaluation</a>
+<a class="font-manrope font-semibold tracking-tight text-slate-500 hover:text-slate-900 transition-colors duration-200 pb-2 cursor-pointer active:opacity-70" href="#">Governance</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="material-symbols-outlined text-slate-700 cursor-pointer">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</div>
+<span class="material-symbols-outlined text-slate-700 cursor-pointer">settings</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="Executive User Profile" class="w-full h-full object-cover" data-alt="Professional portrait of a male executive in a corporate setting with soft office lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCotL1MDBhAdcV6jPzmOcegl4htigOltmAhwHG6KSfH0I7oDvpThhlqZYaD4zqJNyodLuOSk2zMyzA-afjdUHQy1yScMZQNrLhcLCzTRQNLxX_hwEmlA_wwHsgBHnYvorGADFk_ahl0qRk80woJXg55e78Fw9Hw5u6g3W27-8Y3yo39xB-cprzRVGMChlfRl6AZDc6enWmZRUhOX7Yel6BZ0fGRMI9Lll9Yp8rYJPo6RF7iLqWV58XHz05AhmTVeZxjMwy6fxywn4"/>
+</div>
+</div>
+</nav>
+<main class="max-w-[1440px] mx-auto px-8 py-10 space-y-12">
+<!-- Header Section -->
+<header class="space-y-2">
+<span class="font-label text-[10px] uppercase tracking-[0.2em] text-outline font-bold">Workspace / Machine Learning</span>
+<h1 class="font-headline text-4xl font-semibold text-on-surface tracking-tight">Model Training</h1>
+<p class="text-on-surface-variant max-w-2xl leading-relaxed">Establish robust baselines and deploy challenger models to detect performance degradation across your production inference pipelines.</p>
+</header>
+<!-- Training Panels: Asymmetric Grid -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Train Baseline -->
+<div class="bg-surface-container-low rounded-xl p-8 space-y-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-8xl" style="font-variation-settings: 'FILL' 1;">analytics</span>
+</div>
+<div class="space-y-1">
+<h2 class="font-headline text-2xl font-bold text-on-surface">Train Baseline</h2>
+<p class="text-sm text-on-surface-variant font-label">Establish the ground-truth performance metrics.</p>
+</div>
+<div class="space-y-4">
+<div class="relative group/input">
+<label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-2">Upload Reference Dataset (CSV)</label>
+<div class="w-full border-2 border-dashed border-outline-variant/40 rounded-lg p-10 flex flex-col items-center justify-center bg-surface-container-lowest hover:border-primary/40 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-primary mb-2">upload_file</span>
+<span class="text-sm font-medium text-on-surface">Drop file or click to browse</span>
+<span class="text-xs text-outline mt-1">Maximum file size: 500MB</span>
+</div>
+</div>
+<button class="w-full oracle-glow text-white font-manrope font-bold py-4 rounded-lg shadow-xl shadow-primary-container/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-[20px]">play_circle</span>
+                        Train Baseline Model
+                    </button>
+</div>
+</div>
+<!-- Train Challenger -->
+<div class="bg-surface-container-low rounded-xl p-8 space-y-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-8xl" style="font-variation-settings: 'FILL' 1;">science</span>
+</div>
+<div class="space-y-1">
+<h2 class="font-headline text-2xl font-bold text-on-surface">Train Challenger</h2>
+<p class="text-sm text-on-surface-variant font-label">Test experimental features against production logic.</p>
+</div>
+<div class="space-y-4">
+<div class="relative group/input">
+<label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-2">Upload Test Dataset (CSV)</label>
+<div class="w-full border-2 border-dashed border-outline-variant/40 rounded-lg p-10 flex flex-col items-center justify-center bg-surface-container-lowest hover:border-primary/40 transition-colors cursor-pointer">
+<!-- Loading State Simulation for demonstration -->
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 border-2 border-tertiary border-t-transparent rounded-full animate-spin mb-4"></div>
+<span class="text-sm font-medium text-on-surface">Parsing feature vectors...</span>
+<div class="w-48 h-1 bg-surface-container rounded-full mt-4 overflow-hidden">
+<div class="h-full bg-tertiary w-3/4"></div>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full bg-surface-container-highest text-on-surface-variant font-manrope font-bold py-4 rounded-lg flex items-center justify-center gap-3 cursor-not-allowed opacity-70">
+<div class="w-4 h-4 border-2 border-on-surface-variant border-t-transparent rounded-full animate-spin"></div>
+                        Initializing Trainer...
+                    </button>
+</div>
+</div>
+</section>
+<!-- Model Registry Table Section -->
+<section class="space-y-6">
+<div class="flex justify-between items-end">
+<div class="space-y-1">
+<h3 class="font-headline text-xl font-bold text-on-surface">Model Registry Table</h3>
+<p class="text-sm text-on-surface-variant">Version history and technical architecture of trained artifacts.</p>
+</div>
+<div class="flex gap-4">
+<div class="bg-surface-container-low px-4 py-2 rounded-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm font-medium p-0 w-32" placeholder="Filter by ID..." type="text"/>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden ghost-border">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-high">
+<tr>
+<th class="px-6 py-4 font-label text-[11px] font-bold text-outline uppercase tracking-widest">Model ID</th>
+<th class="px-6 py-4 font-label text-[11px] font-bold text-outline uppercase tracking-widest">Version</th>
+<th class="px-6 py-4 font-label text-[11px] font-bold text-outline uppercase tracking-widest">Training Date</th>
+<th class="px-6 py-4 font-label text-[11px] font-bold text-outline uppercase tracking-widest">Features</th>
+<th class="px-6 py-4 font-label text-[11px] font-bold text-outline uppercase tracking-widest">Samples</th>
+<th class="px-6 py-4 font-label text-[11px] font-bold text-outline uppercase tracking-widest">Type</th>
+<th class="px-6 py-4 font-label text-[11px] font-bold text-outline uppercase tracking-widest">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<!-- Row 1 -->
+<tr class="hover:bg-primary-container/10 transition-colors">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="font-headline font-bold text-on-surface">TX-PROD-921</span>
+<span class="text-[10px] font-mono text-outline">SHA: 82f1b0a</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-semibold text-on-surface">v2.4.1</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Oct 12, 2023</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant font-mono">142</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">2.4M</td>
+<td class="px-6 py-5">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Baseline</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2 text-tertiary">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+<span class="text-xs font-bold">Active</span>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-primary-container/10 transition-colors">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="font-headline font-bold text-on-surface">CH-EXP-004</span>
+<span class="text-[10px] font-mono text-outline">SHA: 99a2c3b</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-semibold text-on-surface">v2.5.0-beta</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Oct 14, 2023</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant font-mono">156</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">850k</td>
+<td class="px-6 py-5">
+<span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Challenger</span>
+</td>
+<td class="px-6 py-5 text-xs text-on-surface-variant font-medium">Evaluation</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-primary-container/10 transition-colors">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="font-headline font-bold text-on-surface">TX-PROD-919</span>
+<span class="text-[10px] font-mono text-outline">SHA: 11d3f9e</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-semibold text-on-surface">v2.4.0</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Sep 28, 2023</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant font-mono">142</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">2.4M</td>
+<td class="px-6 py-5">
+<span class="bg-surface-container-highest text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Archived</span>
+</td>
+<td class="px-6 py-5 text-xs text-on-surface-variant font-medium">Decommissioned</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Insights Summary Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="p-6 bg-surface-container rounded-xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">memory</span>
+</div>
+<div>
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest block">GPU Utilization</span>
+<span class="text-xl font-headline font-bold text-on-surface">78.2%</span>
+</div>
+</div>
+<div class="p-6 bg-surface-container rounded-xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">storage</span>
+</div>
+<div>
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest block">Model Artifact Storage</span>
+<span class="text-xl font-headline font-bold text-on-surface">1.2 TB</span>
+</div>
+</div>
+<div class="p-6 bg-surface-container rounded-xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">history</span>
+</div>
+<div>
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest block">Average Training Time</span>
+<span class="text-xl font-headline font-bold text-on-surface">4h 22m</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual Footer -->
+<footer class="mt-20 border-t border-outline-variant/10 px-8 py-10 text-center">
+<p class="text-sm text-outline font-label">Drifting Oracle Intelligence Engine © 2024. All rights reserved.</p>
+</footer>
+</body></html>

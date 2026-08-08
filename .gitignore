@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# Secrets
+.env
+*.env
+!*.env.example
+
+# Large data files (regenerate locally per README instructions)
+backend/dataset/cleaned_data.csv
+
+# Reference docs kept out of the public repo
+/Hackathon_Problem_Statement.pdf
+/LillyJDMLEngineeringIntern.pdf
+/DRIFTING ORACLE COMPLETE.pdf
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

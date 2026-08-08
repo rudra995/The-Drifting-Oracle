@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Drifting Oracle - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#cad5ed",
+                    "secondary-container": "#d3e4fe",
+                    "on-primary-fixed": "#354053",
+                    "on-secondary-container": "#435368",
+                    "error-dim": "#4e0309",
+                    "surface": "#f7f9fb",
+                    "surface-container-highest": "#d9e4ea",
+                    "primary": "#545f73",
+                    "surface-dim": "#cfdce3",
+                    "inverse-primary": "#dae6fe",
+                    "on-secondary": "#f7f9ff",
+                    "tertiary": "#006592",
+                    "primary-dim": "#485367",
+                    "secondary-dim": "#44546a",
+                    "outline-variant": "#a9b4b9",
+                    "on-error-container": "#752121",
+                    "on-tertiary": "#f5f9ff",
+                    "primary-container": "#d8e3fb",
+                    "secondary": "#506076",
+                    "tertiary-dim": "#005980",
+                    "surface-container-high": "#e1e9ee",
+                    "on-primary-fixed-variant": "#515c70",
+                    "on-surface": "#2a3439",
+                    "on-error": "#fff7f6",
+                    "on-background": "#2a3439",
+                    "on-tertiary-container": "#003047",
+                    "error-container": "#fe8983",
+                    "on-primary": "#f6f7ff",
+                    "on-surface-variant": "#566166",
+                    "surface-variant": "#d9e4ea",
+                    "tertiary-fixed": "#34b5fa",
+                    "on-tertiary-fixed": "#00121e",
+                    "outline": "#717c82",
+                    "background": "#f7f9fb",
+                    "on-secondary-fixed": "#314055",
+                    "on-secondary-fixed-variant": "#4d5d73",
+                    "secondary-fixed-dim": "#c5d6f0",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#17a8ec",
+                    "on-tertiary-fixed-variant": "#003954",
+                    "error": "#9f403d",
+                    "primary-fixed": "#d8e3fb",
+                    "secondary-fixed": "#d3e4fe",
+                    "inverse-on-surface": "#9a9d9f",
+                    "tertiary-container": "#34b5fa",
+                    "inverse-surface": "#0b0f10",
+                    "surface-container-low": "#f0f4f7",
+                    "surface-tint": "#545f73",
+                    "surface-bright": "#f7f9fb",
+                    "surface-container": "#e8eff3",
+                    "on-primary-container": "#475266"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .oracle-glow {
+            background: linear-gradient(135deg, #545f73 0%, #d8e3fb 100%);
+        }
+        .ghost-border {
+            border: 1px solid rgba(169, 180, 185, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- TopNavBar -->
+<header class="bg-slate-50/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm flex justify-between items-center w-full px-8 py-4 border-b border-slate-200/20">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold tracking-tighter text-slate-900 font-headline">Drifting Oracle</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="font-headline font-semibold tracking-tight text-slate-900 border-b-2 border-slate-700 pb-2 transition-colors duration-200" href="#">Dashboard</a>
+<a class="font-headline font-semibold tracking-tight text-slate-500 pb-2 hover:text-slate-900 transition-colors duration-200" href="#">Model Training</a>
+<a class="font-headline font-semibold tracking-tight text-slate-500 pb-2 hover:text-slate-900 transition-colors duration-200" href="#">Drift Detection</a>
+<a class="font-headline font-semibold tracking-tight text-slate-500 pb-2 hover:text-slate-900 transition-colors duration-200" href="#">LLM Evaluation</a>
+<a class="font-headline font-semibold tracking-tight text-slate-500 pb-2 hover:text-slate-900 transition-colors duration-200" href="#">Governance</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="material-symbols-outlined text-slate-700 cursor-pointer p-2 rounded-full hover:bg-surface-container transition-colors">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+</div>
+<span class="material-symbols-outlined text-slate-700 cursor-pointer p-2 rounded-full hover:bg-surface-container transition-colors">settings</span>
+<img alt="Executive User Profile" class="w-10 h-10 rounded-full border border-outline-variant/20 shadow-sm" data-alt="Close-up portrait of a professional male executive in a well-lit modern office environment, warm sunlight hitting his face" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZ9VNGeX4-sAenoMCHqx2VjAv2asONfJssSIwOKr3K5UPFBHt94pzTINMX2Lk0_J5sWPPyeeTBCdULd8jfGYcto6O91fK2kPPxeaAr42e5QoRWUQ19_FMJL7baN1jLLYv7DXxiIWRgmIQuGo9vR-pEOMGHclN8P8UAA7IECul_Co5kUgDqVogmiWToGNnQEbOThuigqKAqAqvw3cZLFvpTJgeSnJR9WjBX34VwmskC7PduX3iM3LnpWKPgFZ3Rq6PjgjUxutH-Tsw"/>
+</div>
+</header>
+<main class="p-8 max-w-[1600px] mx-auto space-y-8">
+<!-- Header Section -->
+<section class="flex justify-between items-end">
+<div>
+<h1 class="font-headline text-4xl font-semibold tracking-tight text-on-surface">System Overview</h1>
+<p class="text-on-surface-variant font-label text-xs uppercase tracking-[0.1em] mt-1">Status: Stable Performance Metrics • Last sync 2m ago</p>
+</div>
+<div class="flex gap-3">
+<button class="bg-surface-container-lowest text-on-surface px-4 py-2 rounded-lg font-label text-sm font-semibold shadow-sm hover:bg-surface-container-low transition-all">Generate Report</button>
+<button class="oracle-glow text-white px-6 py-2 rounded-lg font-label text-sm font-semibold shadow-md active:scale-95 transition-all">Manual Retrain</button>
+</div>
+</section>
+<!-- Top Row: KPI Cards -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Models Trained -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-transparent hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Models Trained</span>
+<span class="material-symbols-outlined text-primary p-2 bg-primary-container/20 rounded-lg">model_training</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-headline font-bold text-on-surface">1,248</span>
+<span class="text-tertiary text-xs font-semibold font-label flex items-center">
+<span class="material-symbols-outlined text-sm">trending_up</span> 12%
+                    </span>
+</div>
+<div class="mt-4 h-1 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%] rounded-full"></div>
+</div>
+</div>
+<!-- Drift Detections -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-transparent hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Drift Detections</span>
+<span class="material-symbols-outlined text-error p-2 bg-error-container/20 rounded-lg">warning</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-headline font-bold text-on-surface">14</span>
+<span class="text-error text-xs font-semibold font-label flex items-center">
+<span class="material-symbols-outlined text-sm">trending_up</span> 4
+                    </span>
+</div>
+<div class="mt-4 h-1 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-error w-[15%] rounded-full"></div>
+</div>
+</div>
+<!-- LLM Evaluations -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-transparent hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label text-xs font-semibold text-on-surface-variant uppercase tracking-wider">LLM Evaluations</span>
+<span class="material-symbols-outlined text-tertiary p-2 bg-tertiary-container/20 rounded-lg">psychology</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-headline font-bold text-on-surface">8.4k</span>
+<span class="text-tertiary text-xs font-semibold font-label flex items-center">
+<span class="material-symbols-outlined text-sm">check_circle</span> stable
+                    </span>
+</div>
+<div class="mt-4 h-1 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-[92%] rounded-full"></div>
+</div>
+</div>
+<!-- Governance Events -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-transparent hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Governance Events</span>
+<span class="material-symbols-outlined text-on-surface-variant p-2 bg-surface-container-highest rounded-lg">gavel</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-headline font-bold text-on-surface">42</span>
+<span class="text-on-surface-variant text-xs font-semibold font-label">Active logs</span>
+</div>
+<div class="mt-4 h-1 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-on-surface-variant w-[40%] rounded-full"></div>
+</div>
+</div>
+</section>
+<!-- Middle Row: Charts -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- PSI Bar Chart -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm relative overflow-hidden">
+<div class="flex justify-between items-center mb-8">
+<h3 class="font-headline text-xl font-bold text-on-surface">PSI Bar Chart</h3>
+<span class="text-on-surface-variant font-label text-[10px] uppercase tracking-widest bg-surface-container-low px-2 py-1 rounded">Threshold 0.25</span>
+</div>
+<div class="h-[300px] flex items-end justify-between gap-4 relative">
+<!-- Threshold Line -->
+<div class="absolute bottom-[25%] left-0 w-full border-t-2 border-dashed border-error/40 z-0">
+<span class="absolute -top-5 right-0 text-[10px] font-bold text-error uppercase">Drift Alert</span>
+</div>
+<!-- Bars -->
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full bg-tertiary-container h-[40%] rounded-t-sm transition-all group-hover:opacity-80"></div>
+<span class="font-label text-[10px] mt-2 text-on-surface-variant truncate w-full text-center">Credit_Score</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full bg-error h-[65%] rounded-t-sm transition-all group-hover:opacity-80"></div>
+<span class="font-label text-[10px] mt-2 text-on-surface-variant truncate w-full text-center">Age_Metric</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full bg-tertiary-container h-[15%] rounded-t-sm transition-all group-hover:opacity-80"></div>
+<span class="font-label text-[10px] mt-2 text-on-surface-variant truncate w-full text-center">Zip_Code</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full bg-error h-[82%] rounded-t-sm transition-all group-hover:opacity-80"></div>
+<span class="font-label text-[10px] mt-2 text-on-surface-variant truncate w-full text-center">Annual_Inc</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full bg-tertiary-container h-[22%] rounded-t-sm transition-all group-hover:opacity-80"></div>
+<span class="font-label text-[10px] mt-2 text-on-surface-variant truncate w-full text-center">Employment</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full bg-tertiary-container h-[10%] rounded-t-sm transition-all group-hover:opacity-80"></div>
+<span class="font-label text-[10px] mt-2 text-on-surface-variant truncate w-full text-center">Loan_Type</span>
+</div>
+</div>
+</div>
+<!-- Hallucination vs Grounding Scatter Plot -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm relative overflow-hidden">
+<div class="flex justify-between items-center mb-8">
+<h3 class="font-headline text-xl font-bold text-on-surface">Hallucination vs Grounding</h3>
+<div class="flex gap-3">
+<div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full bg-tertiary"></div><span class="text-[10px] font-label text-on-surface-variant">PASS</span></div>
+<div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full bg-error"></div><span class="text-[10px] font-label text-on-surface-variant">FAIL</span></div>
+</div>
+</div>
+<div class="h-[300px] border-l border-b border-outline-variant/30 relative">
+<!-- Scatter dots -->
+<div class="absolute w-3 h-3 bg-tertiary rounded-full shadow-lg" style="left: 20%; bottom: 85%;"></div>
+<div class="absolute w-3 h-3 bg-tertiary rounded-full shadow-lg" style="left: 35%; bottom: 70%;"></div>
+<div class="absolute w-3 h-3 bg-error rounded-full shadow-lg" style="left: 55%; bottom: 30%;"></div>
+<div class="absolute w-3 h-3 bg-tertiary rounded-full shadow-lg" style="left: 75%; bottom: 90%;"></div>
+<div class="absolute w-3 h-3 bg-error rounded-full shadow-lg" style="left: 80%; bottom: 15%;"></div>
+<div class="absolute w-3 h-3 bg-tertiary rounded-full shadow-lg" style="left: 15%; bottom: 50%;"></div>
+<div class="absolute w-3 h-3 bg-error rounded-full shadow-lg" style="left: 90%; bottom: 45%;"></div>
+<div class="absolute w-3 h-3 bg-tertiary rounded-full shadow-lg" style="left: 45%; bottom: 65%;"></div>
+<!-- Axis Labels -->
+<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Grounding Score (X)</span>
+<span class="absolute -left-12 top-1/2 -translate-y-1/2 -rotate-90 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Faithfulness Score (Y)</span>
+</div>
+</div>
+</section>
+<!-- Bottom Row: Event Timeline -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="p-6 flex justify-between items-center border-b border-surface-container">
+<h3 class="font-headline text-xl font-bold text-on-surface">Event Timeline</h3>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">filter_list</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high">
+<th class="px-6 py-4 font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Timestamp</th>
+<th class="px-6 py-4 font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Event Type</th>
+<th class="px-6 py-4 font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Details</th>
+<th class="px-6 py-4 font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Actor</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low">
+<tr class="hover:bg-primary-container/10 transition-colors">
+<td class="px-6 py-4 font-label text-sm text-on-surface-variant">2023-11-24 14:22:01</td>
+<td class="px-6 py-4">
+<span class="bg-error-container/20 text-on-error-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">Drift Alert</span>
+</td>
+<td class="px-6 py-4 font-label text-sm text-on-surface">Feature 'Annual_Inc' PSI exceeded 0.25 threshold (current: 0.31)</td>
+<td class="px-6 py-4 text-on-surface-variant text-sm">System Engine</td>
+</tr>
+<tr class="hover:bg-primary-container/10 transition-colors">
+<td class="px-6 py-4 font-label text-sm text-on-surface-variant">2023-11-24 13:45:12</td>
+<td class="px-6 py-4">
+<span class="bg-tertiary-container/20 text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">Model Training</span>
+</td>
+<td class="px-6 py-4 font-label text-sm text-on-surface">Evaluation complete for GPT-4-Distill-V2. Hallucination: 0.04</td>
+<td class="px-6 py-4 text-on-surface-variant text-sm">admin_user</td>
+</tr>
+<tr class="hover:bg-primary-container/10 transition-colors">
+<td class="px-6 py-4 font-label text-sm text-on-surface-variant">2023-11-24 11:10:00</td>
+<td class="px-6 py-4">
+<span class="bg-surface-container-highest text-on-surface px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">Governance</span>
+</td>
+<td class="px-6 py-4 font-label text-sm text-on-surface">New bias compliance policy applied to Production Registry</td>
+<td class="px-6 py-4 text-on-surface-variant text-sm">Legal Review</td>
+</tr>
+<tr class="hover:bg-primary-container/10 transition-colors">
+<td class="px-6 py-4 font-label text-sm text-on-surface-variant">2023-11-24 09:30:45</td>
+<td class="px-6 py-4">
+<span class="bg-tertiary-container/20 text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">LLM Eval</span>
+</td>
+<td class="px-6 py-4 font-label text-sm text-on-surface">Grounding score dip detected in Regional Support chatbot</td>
+<td class="px-6 py-4 text-on-surface-variant text-sm">Monitoring Bot</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+<!-- Footer Space -->
+<footer class="h-24"></footer>
+</body></html>

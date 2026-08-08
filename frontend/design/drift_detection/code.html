@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Drifting Oracle | Drift Detection</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#cad5ed",
+                    "secondary-container": "#d3e4fe",
+                    "on-primary-fixed": "#354053",
+                    "on-secondary-container": "#435368",
+                    "error-dim": "#4e0309",
+                    "surface": "#f7f9fb",
+                    "surface-container-highest": "#d9e4ea",
+                    "primary": "#545f73",
+                    "surface-dim": "#cfdce3",
+                    "inverse-primary": "#dae6fe",
+                    "on-secondary": "#f7f9ff",
+                    "tertiary": "#006592",
+                    "primary-dim": "#485367",
+                    "secondary-dim": "#44546a",
+                    "outline-variant": "#a9b4b9",
+                    "on-error-container": "#752121",
+                    "on-tertiary": "#f5f9ff",
+                    "primary-container": "#d8e3fb",
+                    "secondary": "#506076",
+                    "tertiary-dim": "#005980",
+                    "surface-container-high": "#e1e9ee",
+                    "on-primary-fixed-variant": "#515c70",
+                    "on-surface": "#2a3439",
+                    "on-error": "#fff7f6",
+                    "on-background": "#2a3439",
+                    "on-tertiary-container": "#003047",
+                    "error-container": "#fe8983",
+                    "on-primary": "#f6f7ff",
+                    "on-surface-variant": "#566166",
+                    "surface-variant": "#d9e4ea",
+                    "tertiary-fixed": "#34b5fa",
+                    "on-tertiary-fixed": "#00121e",
+                    "outline": "#717c82",
+                    "background": "#f7f9fb",
+                    "on-secondary-fixed": "#314055",
+                    "on-secondary-fixed-variant": "#4d5d73",
+                    "secondary-fixed-dim": "#c5d6f0",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#17a8ec",
+                    "on-tertiary-fixed-variant": "#003954",
+                    "error": "#9f403d",
+                    "primary-fixed": "#d8e3fb",
+                    "secondary-fixed": "#d3e4fe",
+                    "inverse-on-surface": "#9a9d9f",
+                    "tertiary-container": "#34b5fa",
+                    "inverse-surface": "#0b0f10",
+                    "surface-container-low": "#f0f4f7",
+                    "surface-tint": "#545f73",
+                    "surface-bright": "#f7f9fb",
+                    "surface-container": "#e8eff3",
+                    "on-primary-container": "#475266"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .oracle-glow {
+            background: linear-gradient(135deg, #545f73 0%, #d8e3fb 100%);
+        }
+        .glass-panel {
+            background: rgba(240, 244, 247, 0.8);
+            backdrop-filter: blur(24px);
+        }
+        .ghost-border {
+            border: 1px solid rgba(169, 180, 185, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- TopNavBar -->
+<nav class="bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl docked full-width top-0 sticky z-50 shadow-sm dark:shadow-none flex justify-between items-center w-full px-8 py-4 border-b border-slate-200/20 dark:border-slate-800/20">
+<div class="text-2xl font-bold tracking-tighter text-slate-900 dark:text-white font-manrope">Drifting Oracle</div>
+<div class="hidden md:flex gap-8 items-center font-manrope font-semibold tracking-tight">
+<a class="text-slate-500 dark:text-slate-400 pb-2 hover:text-slate-900 dark:hover:text-white transition-colors duration-200 cursor-pointer active:opacity-70" href="#">Dashboard</a>
+<a class="text-slate-500 dark:text-slate-400 pb-2 hover:text-slate-900 dark:hover:text-white transition-colors duration-200 cursor-pointer active:opacity-70" href="#">Model Training</a>
+<a class="text-slate-900 dark:text-white border-b-2 border-slate-700 dark:border-slate-300 pb-2 hover:text-slate-900 dark:hover:text-white transition-colors duration-200 cursor-pointer active:opacity-70" href="#">Drift Detection</a>
+<a class="text-slate-500 dark:text-slate-400 pb-2 hover:text-slate-900 dark:hover:text-white transition-colors duration-200 cursor-pointer active:opacity-70" href="#">LLM Evaluation</a>
+<a class="text-slate-500 dark:text-slate-400 pb-2 hover:text-slate-900 dark:hover:text-white transition-colors duration-200 cursor-pointer active:opacity-70" href="#">Governance</a>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-300 cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-300 cursor-pointer">settings</span>
+<img alt="Executive User Profile" class="w-8 h-8 rounded-full border border-outline-variant/20" data-alt="Close up portrait of a professional male executive with short dark hair in a crisp white shirt and blazer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAowmFG1qD7jHDCADhjRzvDDqN9cLI6iJ5K-OuL0Uc4athqeC1kZ77ZiCfWGmMVrSUw-Rf11sk66LzxXU81KdA8EQ0Nhx0UkCnfrQWhj_XUURBQFJ7kjBX7kHRwo1rk6n0KvqWprIErrxruCNmuUXk7r56w8O98Og-1wTNwhIVcH4ZucZrfLnwR5klSPeK1Jn4XhFjRB3W3gswPKdma0Amiu_wFLpm2LAH0J9kI2HC9D7LcRpjq3Z47zkiNNVUNuqAX2YqdAk6pxvo"/>
+</div>
+</nav>
+<main class="max-w-[1440px] mx-auto p-8 space-y-12">
+<!-- Header & Control Panel -->
+<section class="space-y-8">
+<div class="flex flex-col gap-2">
+<h1 class="font-headline text-4xl font-semibold tracking-tight text-on-surface">Drift Detection</h1>
+<p class="font-label text-sm tracking-widest text-outline uppercase font-medium">Statistical Integrity Monitor • Real-time Validation</p>
+</div>
+<div class="bg-surface-container-low rounded-xl p-8 space-y-8 shadow-sm">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- CSV Inputs -->
+<div class="space-y-2">
+<label class="font-label text-xs font-bold uppercase tracking-wider text-on-surface-variant">Baseline Dataset (CSV)</label>
+<div class="relative flex items-center bg-surface-container-lowest rounded-lg border-b-2 border-outline-variant focus-within:border-primary transition-all p-3">
+<span class="material-symbols-outlined text-primary text-xl mr-2">upload_file</span>
+<input class="hidden" id="baseline-csv" type="file"/>
+<label class="text-sm text-outline cursor-pointer truncate" for="baseline-csv">Choose baseline file...</label>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label text-xs font-bold uppercase tracking-wider text-on-surface-variant">Current Batch (CSV)</label>
+<div class="relative flex items-center bg-surface-container-lowest rounded-lg border-b-2 border-outline-variant focus-within:border-primary transition-all p-3">
+<span class="material-symbols-outlined text-primary text-xl mr-2">analytics</span>
+<input class="hidden" id="current-csv" type="file"/>
+<label class="text-sm text-outline cursor-pointer truncate" for="current-csv">Choose current batch...</label>
+</div>
+</div>
+<!-- Text Inputs -->
+<div class="space-y-2">
+<label class="font-label text-xs font-bold uppercase tracking-wider text-on-surface-variant">Champion Model ID</label>
+<input class="w-full bg-surface-container-lowest rounded-lg border-none border-b-2 border-outline-variant focus:ring-0 focus:border-primary transition-all text-sm p-3" placeholder="ORCL-MDL-772" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="font-label text-xs font-bold uppercase tracking-wider text-on-surface-variant">Batch Name</label>
+<input class="w-full bg-surface-container-lowest rounded-lg border-none border-b-2 border-outline-variant focus:ring-0 focus:border-primary transition-all text-sm p-3" placeholder="Q3_2024_PROD_B" type="text"/>
+</div>
+</div>
+<div class="flex justify-end pt-4">
+<button class="oracle-glow text-on-primary font-headline px-10 py-3 rounded-full text-sm font-bold shadow-lg shadow-primary-container/40 hover:scale-[1.02] active:scale-95 transition-all">
+                        Detect Drift
+                    </button>
+</div>
+</div>
+</section>
+<!-- Results Banner & High Level Stats -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Drift Detected Banner -->
+<div class="lg:col-span-8 bg-error-container/20 rounded-xl p-10 flex flex-col items-start gap-6 border-l-8 border-error overflow-hidden relative">
+<div class="absolute -right-16 -top-16 opacity-10">
+<span class="material-symbols-outlined text-[200px]" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="bg-error p-3 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-2xl" style="font-variation-settings: 'FILL' 1;">error</span>
+</div>
+<h2 class="font-headline text-3xl font-extrabold text-on-error-container tracking-tight">DRIFT DETECTED</h2>
+</div>
+<div class="space-y-4 max-w-2xl">
+<p class="text-on-error-container leading-relaxed font-medium">Significant population stability shifts observed in feature vectors <span class="font-bold underline">Credit_Score</span> and <span class="font-bold underline">Market_Volatility</span>. Current model predictions may be compromised due to covariate shift.</p>
+<div class="bg-surface-container-lowest/60 backdrop-blur rounded-lg p-4 border border-error-container/30">
+<p class="font-label text-xs text-error font-bold uppercase tracking-widest mb-2">Recommendation</p>
+<p class="text-sm font-semibold text-on-surface">Initiate Champion-Challenger re-validation protocol and investigate data source pipeline integrity.</p>
+</div>
+</div>
+</div>
+<!-- PSI Value -->
+<div class="lg:col-span-4 h-full bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/10 shadow-sm flex flex-col justify-between">
+<div class="space-y-2">
+<p class="font-label text-xs font-bold uppercase tracking-[0.2em] text-outline">Overall PSI Score</p>
+<div class="text-6xl font-headline font-bold text-error tracking-tighter">0.248</div>
+</div>
+<div class="mt-8 space-y-4">
+<div class="flex justify-between items-end border-b border-outline-variant/10 pb-2">
+<span class="text-xs font-medium text-outline">Threshold</span>
+<span class="text-sm font-bold text-on-surface">0.100</span>
+</div>
+<div class="flex justify-between items-end border-b border-outline-variant/10 pb-2">
+<span class="text-xs font-medium text-outline">Status</span>
+<span class="text-sm font-bold text-error uppercase">Action Required</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Feature Breakdown Table -->
+<section class="space-y-6">
+<div class="flex justify-between items-center">
+<h3 class="font-headline text-2xl font-bold tracking-tight">Feature Stability Breakdown</h3>
+<div class="flex gap-4">
+<button class="bg-surface-container-high px-4 py-2 rounded text-xs font-bold text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">filter_list</span> Filter High Drift
+                    </button>
+<button class="bg-surface-container-high px-4 py-2 rounded text-xs font-bold text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">download</span> Export Report
+                    </button>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/10">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-high text-on-surface-variant font-label text-[10px] uppercase tracking-widest font-bold">
+<tr>
+<th class="px-6 py-4">Feature Name</th>
+<th class="px-6 py-4">Metric Type</th>
+<th class="px-6 py-4">Baseline Mean</th>
+<th class="px-6 py-4">Current Mean</th>
+<th class="px-6 py-4">PSI Value</th>
+<th class="px-6 py-4">Divergence</th>
+<th class="px-6 py-4 text-right">Status</th>
+</tr>
+</thead>
+<tbody class="text-sm divide-y divide-outline-variant/10 font-medium">
+<!-- High Drift Row -->
+<tr class="bg-error/5 hover:bg-error/10 transition-colors">
+<td class="px-6 py-4 font-bold text-on-surface">Credit_Score</td>
+<td class="px-6 py-4 text-outline font-mono">Continuous</td>
+<td class="px-6 py-4">712.4</td>
+<td class="px-6 py-4">645.1</td>
+<td class="px-6 py-4 font-bold text-error">0.284</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-error">
+<span class="material-symbols-outlined text-xs">south</span> 9.4%
+                                </div>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="bg-error/20 text-error text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider">Critical</span>
+</td>
+</tr>
+<!-- Drifted Row -->
+<tr class="bg-error/5 hover:bg-error/10 transition-colors">
+<td class="px-6 py-4 font-bold text-on-surface">Market_Volatility</td>
+<td class="px-6 py-4 text-outline font-mono">Categorical</td>
+<td class="px-6 py-4">0.04</td>
+<td class="px-6 py-4">0.12</td>
+<td class="px-6 py-4 font-bold text-error">0.156</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-error">
+<span class="material-symbols-outlined text-xs">north</span> 200%
+                                </div>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="bg-error/20 text-error text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider">Warning</span>
+</td>
+</tr>
+<!-- Stable Row -->
+<tr class="hover:bg-primary-container/10 transition-colors">
+<td class="px-6 py-4 font-bold text-on-surface">Income_Level</td>
+<td class="px-6 py-4 text-outline font-mono">Ordinal</td>
+<td class="px-6 py-4">3.2</td>
+<td class="px-6 py-4">3.1</td>
+<td class="px-6 py-4 font-bold text-tertiary">0.021</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-tertiary">
+<span class="material-symbols-outlined text-xs">horizontal_rule</span> 3.1%
+                                </div>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="bg-tertiary/10 text-tertiary text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider">Stable</span>
+</td>
+</tr>
+<tr class="hover:bg-primary-container/10 transition-colors">
+<td class="px-6 py-4 font-bold text-on-surface">User_Age</td>
+<td class="px-6 py-4 text-outline font-mono">Continuous</td>
+<td class="px-6 py-4">34.2</td>
+<td class="px-6 py-4">34.5</td>
+<td class="px-6 py-4 font-bold text-tertiary">0.008</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-tertiary">
+<span class="material-symbols-outlined text-xs">north</span> 0.8%
+                                </div>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="bg-tertiary/10 text-tertiary text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider">Stable</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Bottom Visualizations -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- PSI Bar Chart Placeholder -->
+<div class="bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/10 shadow-sm space-y-6">
+<div class="flex justify-between items-start">
+<h4 class="font-headline text-xl font-bold tracking-tight">PSI Magnitude by Feature</h4>
+<span class="material-symbols-outlined text-outline">bar_chart</span>
+</div>
+<div class="h-64 flex items-end gap-3 px-2">
+<div class="flex-1 bg-error/20 rounded-t-sm flex flex-col justify-end items-center group relative h-[85%]">
+<div class="bg-error w-full h-[60%] rounded-t-sm transition-all group-hover:opacity-80"></div>
+<span class="absolute -bottom-6 text-[10px] font-bold text-outline uppercase tracking-tighter truncate w-full text-center">Credit</span>
+</div>
+<div class="flex-1 bg-error/20 rounded-t-sm flex flex-col justify-end items-center group relative h-[65%]">
+<div class="bg-error w-full h-[40%] rounded-t-sm transition-all group-hover:opacity-80"></div>
+<span class="absolute -bottom-6 text-[10px] font-bold text-outline uppercase tracking-tighter truncate w-full text-center">Market</span>
+</div>
+<div class="flex-1 bg-tertiary/10 rounded-t-sm flex flex-col justify-end items-center group relative h-[30%]">
+<div class="bg-tertiary w-full h-[15%] rounded-t-sm transition-all group-hover:opacity-80"></div>
+<span class="absolute -bottom-6 text-[10px] font-bold text-outline uppercase tracking-tighter truncate w-full text-center">Income</span>
+</div>
+<div class="flex-1 bg-tertiary/10 rounded-t-sm flex flex-col justify-end items-center group relative h-[25%]">
+<div class="bg-tertiary w-full h-[10%] rounded-t-sm transition-all group-hover:opacity-80"></div>
+<span class="absolute -bottom-6 text-[10px] font-bold text-outline uppercase tracking-tighter truncate w-full text-center">Age</span>
+</div>
+<div class="flex-1 bg-tertiary/10 rounded-t-sm flex flex-col justify-end items-center group relative h-[15%]">
+<div class="bg-tertiary w-full h-[5%] rounded-t-sm transition-all group-hover:opacity-80"></div>
+<span class="absolute -bottom-6 text-[10px] font-bold text-outline uppercase tracking-tighter truncate w-full text-center">Geo</span>
+</div>
+</div>
+<div class="pt-8 flex justify-center gap-6">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 bg-error rounded-sm"></div>
+<span class="text-[10px] font-bold text-on-surface uppercase tracking-widest">Significant (&gt;0.1)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 bg-tertiary rounded-sm"></div>
+<span class="text-[10px] font-bold text-on-surface uppercase tracking-widest">Insignificant (&lt;0.1)</span>
+</div>
+</div>
+</div>
+<!-- Drift History Table -->
+<div class="bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/10 shadow-sm space-y-6">
+<div class="flex justify-between items-start">
+<h4 class="font-headline text-xl font-bold tracking-tight">Audit Trail / History</h4>
+<span class="material-symbols-outlined text-outline">history</span>
+</div>
+<div class="space-y-1">
+<div class="grid grid-cols-4 font-label text-[10px] uppercase font-bold text-outline-variant py-2 px-2 border-b border-outline-variant/10">
+<div>Date</div>
+<div>Batch</div>
+<div>PSI</div>
+<div class="text-right">Result</div>
+</div>
+<div class="grid grid-cols-4 items-center text-sm py-4 px-2 border-b border-outline-variant/5">
+<div class="text-outline text-xs">Aug 12, 14:20</div>
+<div class="font-bold">Q3_2024_PROD_B</div>
+<div class="font-mono text-error">0.248</div>
+<div class="text-right"><span class="text-error font-bold text-[10px] uppercase">Failed</span></div>
+</div>
+<div class="grid grid-cols-4 items-center text-sm py-4 px-2 border-b border-outline-variant/5">
+<div class="text-outline text-xs">Aug 11, 09:00</div>
+<div class="font-bold">Q3_2024_PROD_A</div>
+<div class="font-mono text-tertiary">0.084</div>
+<div class="text-right"><span class="text-tertiary font-bold text-[10px] uppercase">Passed</span></div>
+</div>
+<div class="grid grid-cols-4 items-center text-sm py-4 px-2 border-b border-outline-variant/5">
+<div class="text-outline text-xs">Aug 10, 18:30</div>
+<div class="font-bold">DEV_SANDBOX_V4</div>
+<div class="font-mono text-tertiary">0.062</div>
+<div class="text-right"><span class="text-tertiary font-bold text-[10px] uppercase">Passed</span></div>
+</div>
+</div>
+<button class="w-full text-center text-primary font-bold text-xs uppercase tracking-widest pt-2 hover:underline">View Full Audit History</button>
+</div>
+</section>
+</main>
+<footer class="mt-20 border-t border-outline-variant/10 py-12 px-8 flex justify-between items-center bg-surface-container-low">
+<div class="flex items-center gap-6">
+<span class="font-headline text-lg font-bold tracking-tighter">Drifting Oracle</span>
+<span class="text-xs text-outline font-medium">© 2024 Editorial Intelligence Systems Inc.</span>
+</div>
+<div class="flex gap-8 text-xs font-bold text-outline-variant uppercase tracking-widest">
+<a class="hover:text-primary transition-colors" href="#">API Documentation</a>
+<a class="hover:text-primary transition-colors" href="#">Privacy Shield</a>
+<a class="hover:text-primary transition-colors" href="#">Support Portal</a>
+</div>
+</footer>
+</body></html>
