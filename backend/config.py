@@ -9,6 +9,8 @@ Architecture:
 """
 from datetime import datetime
 
+import databricks_io
+
 # --------------------------------------------
 # Model Paths (case-insensitive fallbacks)
 # --------------------------------------------
@@ -79,17 +81,23 @@ LLM_EVALUATIONS: list[dict] = []
 
 
 def log_governance_event(event_type: str, details: str, model_id: str = None):
-    """Append a governance event to the in-memory log."""
+    """Append a governance event to the in-memory log and persist it to Delta."""
     GOVERNANCE_LOG.insert(0, {
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "event_type": event_type,
         "details": details,
         "model_id": model_id,
     })
+    databricks_io.insert_governance_event(event_type, details, model_id)
 
 
 def log_drift_detection(overall_psi: float, per_feature: dict, drift_detected: bool):
-    """Record a drift detection result with per-feature breakdown."""
+    """Record a drift detection result with per-feature breakdown, in-memory and in Delta."""
+    recommendation = (
+        "Switch to Challenger model -- significant distribution shift detected."
+        if drift_detected
+        else "No action required -- data distribution stable."
+    )
     DRIFT_HISTORY.insert(0, {
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "overall_psi": overall_psi,
@@ -98,12 +106,9 @@ def log_drift_detection(overall_psi: float, per_feature: dict, drift_detected: b
             {"feature_name": feat, "psi_score": score}
             for feat, score in per_feature.items()
         ],
-        "recommendation": (
-            "Switch to Challenger model -- significant distribution shift detected."
-            if drift_detected
-            else "No action required -- data distribution stable."
-        ),
+        "recommendation": recommendation,
     })
+    databricks_io.insert_drift_event(overall_psi, per_feature, drift_detected, recommendation)
 
 
 def log_llm_evaluation(explanation: str, llm_used: str, probability: float = None):
@@ -153,9 +158,18 @@ def log_llm_evaluation(explanation: str, llm_used: str, probability: float = Non
     }
     
     config.LLM_EVALUATIONS.insert(0, eval_record)
-    
-    # Keep only last 50 evaluations to prevent memory bloat
+
+    databricks_io.insert_llm_evaluation(
+        eval_record["explanation"],
+        eval_record["llm_used"],
+        eval_record["factual_grounding_score"],
+        eval_record["hallucination_score"],
+        eval_record["status"],
+        eval_record["issues_found"],
+    )
+
+    # Keep only last 50 evaluations in memory (Delta table keeps full history)
     if len(config.LLM_EVALUATIONS) > 50:
         config.LLM_EVALUATIONS.pop()
-        
+
     return eval_record

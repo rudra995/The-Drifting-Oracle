@@ -37,6 +37,7 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
 import config
+import databricks_io
 from model_loader import load_feature_order, load_model
 from psi import build_baseline_distributions, calculate_multi_feature_psi
 from preprocessing import (
@@ -247,6 +248,17 @@ async def predict(data: PredictRequest):
     # Log LLM evaluation for monitoring
     eval_record = config.log_llm_evaluation(llm_result["explanation"], llm_result["llm_used"], pred["probability"])
 
+    decision = "Reject Loan" if pred["probability"] >= 0.5 else "Accept Loan"
+    databricks_io.insert_prediction(
+        total_rows=1,
+        avg_probability=pred["probability"],
+        default_rate=1.0 if pred["probability"] >= 0.5 else 0.0,
+        model_used=model_used,
+        overall_psi=overall_psi,
+        drift_detected=drift_detected,
+        decision=decision,
+    )
+
     return {
         "status": "success",
         "psi": overall_psi,
@@ -255,7 +267,7 @@ async def predict(data: PredictRequest):
         "model_used": model_used,
         "probability": pred["probability"],
         "risk_label": pred["risk_label"],
-        "decision": "Reject Loan" if pred["probability"] >= 0.5 else "Accept Loan",
+        "decision": decision,
         "explanation": llm_result["explanation"],
         "explanation_llm": llm_result["llm_used"],
         "llm_evaluation": eval_record["evaluation"]
@@ -382,6 +394,18 @@ async def predict_batch(file: UploadFile = File(...)):
     # -- Step 10: Log LLM Evaluation -------
     eval_record = config.log_llm_evaluation(llm_result["explanation"], llm_result["llm_used"], default_rate)
 
+    # -- Step 10b: Log Prediction Batch (Delta) ----
+    batch_decision = "Reject Loan" if default_rate >= 0.5 else "Accept Loan"
+    databricks_io.insert_prediction(
+        total_rows=len(df),
+        avg_probability=avg_probability,
+        default_rate=default_rate,
+        model_used=model_used,
+        overall_psi=overall_psi,
+        drift_detected=drift_detected,
+        decision=batch_decision,
+    )
+
     # -- Step 11: Build Response ------------------
     return {
         "status": "success",
@@ -393,7 +417,7 @@ async def predict_batch(file: UploadFile = File(...)):
         "default_rate": default_rate,
         "avg_probability": avg_probability,
         "risk_distribution": risk_counts,
-        "decision": "Reject Loan" if default_rate >= 0.5 else "Accept Loan",
+        "decision": batch_decision,
         "message": (
             f"Drift detected (PSI={overall_psi}). Switched to {model_used} model."
             if drift_detected
