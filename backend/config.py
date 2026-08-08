@@ -38,7 +38,41 @@ PSI_FEATURES = [
 ]
 
 PSI_NUM_BINS = 10
-PSI_THRESHOLD = 0.25  # Single threshold: < 0.25 = Champion, >= 0.25 = Challenger
+
+# --------------------------------------------
+# Why 0.25?
+# --------------------------------------------
+# PSI is a sum of (actual% - expected%) * ln(actual% / expected%) across bins,
+# so it's an unbounded, feature-scale-independent measure of how far an
+# incoming distribution has drifted from the training baseline. The bands
+# below are the standard credit-risk-industry interpretation of PSI, not
+# specific to this project -- they come from Population Stability Index's
+# original use in credit scorecard monitoring (SAS/FICO literature), and the
+# same bands are what Home Credit / SEBI-style risk teams use in practice:
+#
+#   PSI < 0.10            -> no meaningful shift. Model is safe as-is.
+#   0.10 <= PSI < 0.25     -> moderate shift. Worth investigating, not yet
+#                             an action trigger -- could be noise or a small,
+#                             recoverable seasonal effect.
+#   PSI >= 0.25            -> significant shift. The scoring population has
+#                             materially diverged from what the model was
+#                             trained on; treat predictions as unreliable
+#                             until addressed.
+#
+# 0.25 is set as the single action threshold (not 0.10) deliberately: it's
+# the point where the standard interpretation stops calling the shift
+# "moderate" and starts calling it "significant." Below it, switching models
+# or retraining on every minor fluctuation would cause far more churn
+# (and far more retraining cost -- see retrain.py's cooldown) than the drift
+# actually warrants. A lower threshold trades false-alarm rate for
+# sensitivity; 0.25 is the industry's usual line for "this needs a response,"
+# not a value tuned to this specific dataset.
+#
+# Overall PSI here is the mean of the per-feature PSI scores (psi.py), so a
+# single wildly-drifted feature can't single-handedly trigger the threshold
+# on its own unless it dominates the average -- multiple features drifting
+# together is what actually crosses 0.25 in practice.
+PSI_THRESHOLD = 0.25  # Single threshold: < 0.25 = Champion, >= 0.25 = Challenger + retrain
 
 # --------------------------------------------
 # Risk Label Thresholds
