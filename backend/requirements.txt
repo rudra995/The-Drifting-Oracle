@@ -1,3 +1,9 @@
+# CPU-only torch build -- sentence-transformers here only ever runs on CPU
+# (a small embedding model, no GPU in this deployment), so the default
+# CUDA-bundled wheel from PyPI is pure waste: multiple GB of unused CUDA
+# runtime slowing every install and bloating every image for nothing.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 fastapi==0.115.12
 uvicorn[standard]==0.34.2
 pydantic==2.11.1
@@ -12,6 +18,7 @@ requests
 sentence-transformers
 torch
 mlflow
+prefect
 
 # Dev-only: for scripts/train.py's one-time raw data download from Kaggle
 kaggle

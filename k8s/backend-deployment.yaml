@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drifting-oracle-backend
+  labels:
+    app: drifting-oracle-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: drifting-oracle-backend
+  template:
+    metadata:
+      labels:
+        app: drifting-oracle-backend
+    spec:
+      containers:
+        - name: backend
+          image: drifting-oracle-backend:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: drifting-oracle-backend-secrets
+          env:
+            - name: FRONTEND_ORIGINS
+              value: "http://drifting-oracle-frontend"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 20
