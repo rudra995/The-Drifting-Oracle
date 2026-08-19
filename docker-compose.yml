@@ -7,6 +7,21 @@ services:
       - ./backend/.env
     environment:
       FRONTEND_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173,http://localhost:80,http://localhost"
+      # backend/.env's LLAMA_ENDPOINT is written for host-native dev
+      # (uvicorn running directly on the host, where "localhost" IS the
+      # host). Inside this container "localhost" means the container
+      # itself, so a host-run Ollama is unreachable there -- override with
+      # Docker's host-gateway DNS name instead. Confirmed live: without
+      # this, Llama fails with "Connection refused" and every request
+      # falls through to the Gemini fallback (and once its free-tier quota
+      # is hit, to the honest fallback_error state) even though Ollama was
+      # running fine on the host the whole time.
+      LLAMA_ENDPOINT: "http://host.docker.internal:11434/api/generate"
+    extra_hosts:
+      # host.docker.internal resolves automatically on Docker Desktop
+      # (Windows/Mac); this mapping is what makes it also resolve under
+      # plain Docker Engine on Linux (host-gateway support added in 20.10).
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   frontend:

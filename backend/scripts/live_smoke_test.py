@@ -47,8 +47,11 @@ def t_predict_single():
     }
     r = requests.post(f"{BASE}/predict", json=payload, timeout=60)
     d = r.json()
-    ok = r.status_code == 200 and "probability" in d and "explanation" in d.get("llm_evaluation", d)
-    return ok, f"status={d.get('risk_label')} prob={d.get('probability')} llm_used={d.get('llm_used', d.get('llm_evaluation',{}).get('llm_used'))}"
+    # /predict's real response shape: "explanation" is top-level (not
+    # nested under llm_evaluation, which holds the grounding/hallucination
+    # check result instead), and the LLM name is "explanation_llm".
+    ok = r.status_code == 200 and "probability" in d and "explanation" in d
+    return ok, f"status={d.get('risk_label')} prob={d.get('probability')} llm_used={d.get('explanation_llm')}"
 
 
 def t_predict_batch(csv_path, label):
