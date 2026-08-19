@@ -20,7 +20,7 @@ export default function SystemOverview() {
  : error
  ? error
  : health
- ? `Status: ${health.status === 'healthy' ? 'Healthy' : health.status} • Model loaded: ${health.model_loaded ? 'Yes' : 'No'} • Features: ${health.features_count} • Window: ${health.window_size}`
+ ? `Status: ${health.status === 'healthy' ? 'Healthy' : health.status} • Model loaded: ${health.model_loaded ? 'Yes' : 'No'} • Features: ${health.features_count}`
  : 'Unable to fetch system status';
 
  return (

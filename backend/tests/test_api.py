@@ -23,10 +23,14 @@ def test_predict_single_row_returns_full_response_shape(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "success"
-    assert "psi" in body
-    assert "psi_per_feature" in body
-    assert isinstance(body["drift_detected"], bool)
-    assert body["model_used"] in ("Champion", "Challenger")
+    # PSI is a population-level statistic and is meaningless on a single row
+    # (a histogram of n=1 always puts 100% of the mass in one bin -- verified
+    # live, PSI~12+ regardless of the applicant). Single-row predict does not
+    # compute it and always uses the Champion model -- see main.py's /predict
+    # docstring.
+    assert "psi" not in body
+    assert "drift_detected" not in body
+    assert body["model_used"] == "Champion"
     assert 0.0 <= body["probability"] <= 1.0
     assert body["risk_label"] in ("Low", "Medium", "High")
     assert body["decision"] in ("Accept Loan", "Reject Loan")
@@ -74,7 +78,10 @@ def test_predict_batch_valid_csv_returns_full_response_shape(client):
 def test_predict_batch_rejects_non_csv_file(client):
     files = {"file": ("data.txt", io.BytesIO(b"not a csv"), "text/plain")}
     resp = client.post("/predict_batch", files=files)
-    assert resp.status_code == 200  # app returns a JSON error body, not an HTTP error
+    # Every failure path returns a real 4xx now, not a 200 with a "failed"
+    # body -- so a client (or monitoring check) that only looks at the HTTP
+    # status code, not the body, still correctly sees this as a failure.
+    assert resp.status_code == 400
     body = resp.json()
     assert body["status"] == "failed"
     assert "csv" in body["error"].lower()
@@ -83,6 +90,7 @@ def test_predict_batch_rejects_non_csv_file(client):
 def test_predict_batch_rejects_empty_csv(client):
     files = {"file": ("empty.csv", io.BytesIO(b""), "text/csv")}
     resp = client.post("/predict_batch", files=files)
+    assert resp.status_code == 400
     body = resp.json()
     assert body["status"] == "failed"
     assert "empty" in body["error"].lower()
@@ -94,6 +102,7 @@ def test_predict_batch_rejects_malformed_csv(client):
     malformed = b"a,b,c\n1,2\n3,4,5,6,7\n"
     files = {"file": ("malformed.csv", io.BytesIO(malformed), "text/csv")}
     resp = client.post("/predict_batch", files=files)
+    assert resp.status_code == 400
     body = resp.json()
     assert body["status"] == "failed"
     assert "Invalid CSV" in body["error"]

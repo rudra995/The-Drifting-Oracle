@@ -14,6 +14,13 @@ venv/
 backend/dataset/cleaned_data.csv
 backend/dataset/raw/
 
+# Growing training corpus for drift-triggered retraining -- seeded from
+# dataset/raw/application_train.csv and grown at runtime; see continual_retrain.py
+backend/dataset/cumulative_training_data.csv
+
+# ChromaDB persistent store -- auto-rebuilt from dataset/rbi_regulations_corpus.json
+backend/chroma_db/
+
 # Local model backups made by scripts/train.py before overwriting Models/*.pkl
 backend/Models/*.bak-*
 

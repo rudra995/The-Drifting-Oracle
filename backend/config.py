@@ -16,10 +16,20 @@ import databricks_io
 # --------------------------------------------
 MODEL_PATHS = ["models/model.pkl", "Models/model.pkl"]
 GERMAN_MODEL_PATHS = ["models/model_german.pkl", "Models/model_german.pkl"]
+MODEL_METRICS_PATHS = ["models/model_metrics.json", "Models/model_metrics.json"]
 FEATURE_PATHS = ["models/features.txt", "Models/features.txt"]
 BASELINE_PATHS = [
     "models/baseline.csv",
     "Models/baseline.csv",
+    "dataset/raw/application_train.csv",
+    # Last-resort fallback only -- cleaned_data.csv has EXT_SOURCE_3 (and
+    # possibly other EXT_SOURCE) missing values imputed to a literal 0.0,
+    # while live serving (psi.py) drops true NaNs. That mismatch causes a
+    # large false-positive PSI spike on any real batch with normal (~19%)
+    # missingness in that feature -- confirmed live: PSI 0.40 -> 0.05 on the
+    # same 2,000-row real batch once the baseline source was switched to the
+    # raw, unimputed file above, which is processed through the identical
+    # reshape/engineer path a live batch goes through.
     "dataset/cleaned_data.csv",
 ]
 
@@ -81,6 +91,23 @@ RISK_LOW_THRESHOLD = 0.3       # probability < 0.3 -> "Low"
 RISK_HIGH_THRESHOLD = 0.7      # probability >= 0.7 -> "High"
                                 # 0.3 <= probability < 0.7 -> "Medium"
 
+DEFAULT_DECISION_THRESHOLD = 0.5  # sklearn's default -- used only as a
+                                   # fallback before scripts/tune_threshold.py
+                                   # has ever been run for this model.
+
+
+def get_decision_threshold() -> float:
+    """
+    The Accept/Reject cutoff on predicted default probability. Reads
+    champion.decision_threshold from Models/model_metrics.json (written by
+    scripts/tune_threshold.py, cost-weighted -- see that script's docstring
+    for why this isn't a bare 0.5 or F1-argmax), falling back to 0.5 if
+    tuning has never been run. A function, not a module-level constant,
+    because MODEL_METRICS is only populated after config.py is imported
+    (at server startup, via model_loader.load_model_metrics()).
+    """
+    return MODEL_METRICS.get("champion", {}).get("decision_threshold", DEFAULT_DECISION_THRESHOLD)
+
 # --------------------------------------------
 # Champion -> Challenger Feature Mapping
 # Maps Home Credit columns to German model features
@@ -99,6 +126,7 @@ CHAMPION_TO_CHALLENGER_MAP = {
 # --------------------------------------------
 MODEL = None                          # Champion model (XGBClassifier, 20 features)
 GERMAN_MODEL = None                   # Challenger model (XGBClassifier, 8 features)
+MODEL_METRICS: dict = {}              # {"champion": {auc, precision, recall, f1, model_type, trained_at}, "challenger": {...}}
 FEATURE_ORDER: list[str] = []         # Champion feature names from features.txt
 BASELINE_DATA = None                  # Full baseline DataFrame (training distribution)
 BASELINE_DISTRIBUTIONS: dict = {}     # {feature_name: np.ndarray of bin percentages}
@@ -152,14 +180,21 @@ def log_drift_detection(overall_psi: float, per_feature: dict, drift_detected: b
     databricks_io.insert_drift_event(overall_psi, per_feature, drift_detected, recommendation)
 
 
-def log_llm_evaluation(explanation: str, llm_used: str, probability: float = None):
+def log_llm_evaluation(explanation: str, llm_used: str, probability: float = None, eval_result: dict = None):
     """
     Log an LLM-generated explanation for evaluation and monitoring using semantic embedding auditing.
+
+    eval_result: pass this through when the caller already ran the grounding
+    check (llm_graph.py's predict->explain->evaluate graph always has, since
+    it needs the result to decide whether to retry) -- avoids re-running the
+    embedding + ChromaDB lookup a second time for the same explanation.
     """
     import config
 
-    # Fast fallback if explanation errored gracefully before LLM
-    if llm_used == "fallback_error":
+    if eval_result is not None:
+        pass  # already computed by the caller (llm_graph.py)
+    elif llm_used == "fallback_error":
+        # Fast fallback if explanation errored gracefully before LLM
         eval_result = {
             "grounded": False,
             "hallucination": True,
@@ -170,7 +205,7 @@ def log_llm_evaluation(explanation: str, llm_used: str, probability: float = Non
         # Import dynamically to avoid circular issues during startup
         try:
             from llm_evaluator import evaluate_explanation
-            eval_result = evaluate_explanation(explanation)
+            eval_result = evaluate_explanation(explanation, known_probability=probability)
         except Exception as e:
             print("LLM EVALUATOR ERROR:", repr(e))
             import traceback
@@ -181,7 +216,7 @@ def log_llm_evaluation(explanation: str, llm_used: str, probability: float = Non
                 "grounding_score": 0.0,
                 "unsupported_claims": ["Evaluator completely missing"]
             }
-        
+
     eval_record = {
         "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "explanation": explanation[:200],  # First 200 chars for display

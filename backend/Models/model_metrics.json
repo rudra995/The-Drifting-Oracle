@@ -1,0 +1,24 @@
+{
+  "champion": {
+    "auc": 0.759,
+    "precision": 0.1666,
+    "recall": 0.6798,
+    "f1": 0.2676,
+    "model_type": "XGBClassifier",
+    "trained_at": "2026-08-17T18:41:37.173048Z",
+    "decision_threshold": 0.68,
+    "precision_at_threshold": 0.2594,
+    "recall_at_threshold": 0.3776,
+    "f1_at_threshold": 0.3076,
+    "f1_optimal_threshold_for_reference": 0.6709,
+    "threshold_note": "decision_threshold minimizes an illustrative cost function (5x FN + 1x FP) on the held-out test set's precision-recall curve -- not pure F1-argmax, which implicitly treats a missed default and a wrongly-rejected good applicant as equally costly (rarely true in credit risk: a missed default typically costs the full loan principal, far more than the forgone margin on a wrongly-rejected applicant). The 5x ratio is an illustrative placeholder, not derived from this bank's real economics -- a real deployment should replace it. The F1-optimal threshold is kept for reference under f1_optimal_threshold_for_reference. precision/recall/f1 above (no suffix) remain the original values at the sklearn-default 0.5 threshold."
+  },
+  "challenger": {
+    "auc": 0.7308,
+    "precision": 0.1564,
+    "recall": 0.6469,
+    "f1": 0.2519,
+    "model_type": "XGBClassifier",
+    "trained_at": "2026-08-17T18:41:37.173048Z"
+  }
+}

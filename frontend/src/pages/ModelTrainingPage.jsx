@@ -144,8 +144,7 @@ export default function ModelTrainingPage() {
  <Database size={16} className="text-accent" /> Challenger Status
  </h3>
  <p className="text-xs text-on-surface-variant leading-loose font-mono uppercase tracking-widest">
- Window size: <strong className="text-on-surface">{health?.window_size ?? '—'}</strong> • 
- Ready to switch when drift threshold exceeded
+  Ready to switch when drift threshold exceeded
  </p>
  </div>
  )}

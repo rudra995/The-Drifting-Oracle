@@ -1,4 +1,16 @@
-# RBI/SEBI Guidelines & Regulations Ground Truth
+# RBI/SEBI Guidelines & Regulations Ground Truth (SUPERSEDED)
+
+> **Superseded 2026-08-14.** This file was hand-written for the hackathon and
+> contains at least one fabricated citation (the "30-day cooling-off period
+> before reassessing a rejected application" in section 5.1 was not
+> substantiated by independent web research) and one mislabeled one (the
+> "Co-Lending Arrangement Guidelines, 2026" is actually the *2025* RBI
+> (Co-Lending Arrangements) Directions with a 2026 effective date). The live
+> ground truth used by `llm_evaluator.py` is now
+> `dataset/rbi_regulations_corpus.json` -- each entry there is independently
+> sourced with a real circular/direction number, date, URL, and a confidence
+> tag. Kept here for history only; do not use this file as a source.
+
 ## For LLM Evaluation in Credit Risk Scoring & Loan Rejection Explanations
 
 Last Updated: April 2026 | Source: RBI Official Notifications & Directives

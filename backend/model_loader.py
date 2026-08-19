@@ -2,6 +2,7 @@
 Model and feature-order loading logic.
 Called once at startup.
 """
+import json
 import os
 import joblib
 import config
@@ -43,3 +44,24 @@ def load_model():
                 print(f"[loader] Error loading German model from {path}: {e}")
     else:
         print("[loader] Warning: German model file missing or failed to load.")
+
+    load_model_metrics()
+
+
+def load_model_metrics():
+    """Load champion/challenger AUC/precision/recall/f1 written by scripts/train.py.
+
+    Missing file (e.g. models shipped without a training run in this env)
+    just leaves config.MODEL_METRICS empty -- /api/v1/models falls back to
+    nulls rather than erroring.
+    """
+    for path in config.MODEL_METRICS_PATHS:
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    config.MODEL_METRICS = json.load(f)
+                print(f"[loader] Model metrics loaded from {path}: {config.MODEL_METRICS}")
+                return
+            except Exception as e:
+                print(f"[loader] Error loading model metrics from {path}: {e}")
+    print("[loader] Warning: model_metrics.json not found -- /api/v1/models will show null metrics.")

@@ -3,7 +3,10 @@
  * All backend calls go through fetchApi().
  */
 
-export const API_BASE = 'http://localhost:8000';
+// VITE_API_BASE lets a build target a non-local backend (e.g. a real
+// multi-host Kubernetes deployment); falls back to localhost:8000 for local
+// dev, which is unaffected when the env var isn't set.
+export const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 /**
  * Fetch data from the backend API.
@@ -39,8 +42,19 @@ export async function fetchApi(endpoint, options = {}) {
     throw new Error(`Missing endpoint: ${endpoint}`);
   }
 
+  // The backend now returns real 4xx/5xx status codes for request failures
+  // (bad CSV, model not loaded, etc.), with the same
+  // {status: "failed", error: "..."} body it always sent. Parse that body
+  // instead of discarding it, so callers that already check
+  // `result.status !== 'success'` still get the specific error message.
+  // Only fall back to a generic error if the body itself isn't valid JSON
+  // (a truly unexpected failure, e.g. a proxy error page).
   if (!response.ok) {
-    throw new Error(`Missing endpoint: ${endpoint}`);
+    try {
+      return await response.json();
+    } catch {
+      throw new Error(`Missing endpoint: ${endpoint}`);
+    }
   }
 
   return response.json();

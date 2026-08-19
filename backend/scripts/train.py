@@ -27,10 +27,12 @@ What this does:
 Usage:
     python scripts/train.py
 """
+import json
 import os
 import sys
 import shutil
 import time
+from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -61,7 +63,8 @@ load_dotenv()
 
 import config
 from model_loader import load_feature_order
-from preprocessing import prepare_champion_input, engineer_challenger_features
+from preprocessing import prepare_champion_input, engineer_challenger_features, reshape_raw_kaggle_columns
+from continual_retrain import get_training_data_path
 
 RAW_DATA_PATH = "dataset/raw/application_train.csv"
 CATALOG = os.getenv("DATABRICKS_CATALOG", "drifting_oracle")
@@ -74,19 +77,22 @@ CHALLENGER_UC_NAME = f"{CATALOG}.{SCHEMA}.challenger_credit_model"
 
 
 def load_raw_and_reshape() -> pd.DataFrame:
-    """Load Kaggle's raw application_train.csv and reshape it into the
-    column schema preprocessing.py's functions expect."""
-    print(f"[train] Loading {RAW_DATA_PATH} ...")
-    df = pd.read_csv(RAW_DATA_PATH)
+    """Load the training source and reshape it into the column schema
+    preprocessing.py's functions expect.
+
+    This is the persisted, growing corpus (see continual_retrain.py) once
+    a real drift event has appended a synthesized era to it, or the
+    original static application_train.csv snapshot until then -- so a
+    drift-triggered retrain benefits from the larger window the same pass
+    it grows it, and a manual `python scripts/train.py` run always trains
+    on whatever the corpus currently is.
+    """
+    path = get_training_data_path()
+    print(f"[train] Loading {path} ...")
+    df = pd.read_csv(path)
     print(f"[train]   {len(df)} rows, {len(df.columns)} raw columns")
 
-    df = df.rename(columns={"AMT_CREDIT": "AMT_CREDIT_x"})
-    df["CODE_GENDER_M"] = (df["CODE_GENDER"] == "M").astype(int)
-    df["CODE_GENDER_XNA"] = (df["CODE_GENDER"] == "XNA").astype(int)
-    df["FLAG_OWN_CAR_Y"] = (df["FLAG_OWN_CAR"] == "Y").astype(int)
-    df["FLAG_OWN_REALTY_Y"] = (df["FLAG_OWN_REALTY"] == "Y").astype(int)
-
-    return df
+    return reshape_raw_kaggle_columns(df)
 
 
 def evaluate_model(model, X_test, y_test, threshold: float = 0.5) -> dict:
@@ -130,6 +136,26 @@ def register_and_alias(model_uri: str, uc_name: str, alias: str) -> str:
     return result.version
 
 
+def write_local_metrics(champion_metrics: dict, champion_type: str, challenger_metrics: dict, path: str = "Models/model_metrics.json"):
+    """Mirror the just-logged MLflow metrics to a small local JSON file.
+
+    /api/v1/models needs these to show real AUC/precision/recall in the
+    dashboard, but querying the remote Databricks MLflow tracking server on
+    every dashboard request would be slow and would break the demo offline.
+    Same pattern as backup_and_save() writing Models/*.pkl locally -- the
+    live server reads this file at startup and after hot-reload, no network
+    call needed.
+    """
+    trained_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    payload = {
+        "champion": {**champion_metrics, "model_type": champion_type, "trained_at": trained_at},
+        "challenger": {**challenger_metrics, "model_type": "XGBClassifier", "trained_at": trained_at},
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+    print(f"[train]   Wrote {path}")
+
+
 def backup_and_save(model, local_path: str):
     if os.path.exists(local_path):
         backup_path = local_path + f".bak-{int(time.time())}"
@@ -146,6 +172,7 @@ def main():
 
     load_feature_order()  # populates config.FEATURE_ORDER from features.txt
 
+    training_source = get_training_data_path()
     df = load_raw_and_reshape()
     y = df["TARGET"]
 
@@ -220,6 +247,8 @@ def main():
     challenger_version = register_and_alias(challenger_uri, CHALLENGER_UC_NAME, "challenger")
     backup_and_save(xgb_challenger, "Models/model_german.pkl")
 
+    write_local_metrics(champion_metrics, type(champion_model).__name__, challenger_metrics)
+
     # ------------------------------------------------------------
     # Log the promotion decision as a governance event (Delta)
     # ------------------------------------------------------------
@@ -230,7 +259,7 @@ def main():
             f"Champion v{champion_version} ({type(champion_model).__name__}, "
             f"AUC={champion_metrics['auc']}, precision={champion_metrics['precision']}, "
             f"recall={champion_metrics['recall']}) trained on {len(train_df)} rows of "
-            f"application_train.csv. Challenger v{challenger_version} (XGBoost, "
+            f"{training_source}. Challenger v{challenger_version} (XGBoost, "
             f"AUC={challenger_metrics['auc']}) trained on the same data via the 8-feature "
             f"schema. Both registered in Unity Catalog with @champion/@challenger aliases."
         ),

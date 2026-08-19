@@ -59,15 +59,20 @@ export default function PsiBarChart() {
  );
  }
 
- // Derive bars from drift history data
- const bars = Array.isArray(data) ? data.map((entry) => {
- const features = entry.drift_features || [];
- return features.map((f) => ({
+ // Derive bars from the most recent drift history entry only (data[0] is
+ // newest-first -- matches DriftDetectionPage's `latestEntry` convention).
+ // Previously this flattened every history entry's features together before
+ // slicing to 8, so once there was more than one drift event on record,
+ // feature names collided as React keys -- confirmed live via a "duplicate
+ // key" console warning once real testing produced multiple drift events.
+ const latest = Array.isArray(data) && data.length > 0 ? data[0] : null;
+ const bars = latest
+ ? (latest.drift_features || []).slice(0, 8).map((f) => ({
  label: f.feature_name,
  height: `${Math.min((f.psi_score / 0.5) * 100, 100)}%`,
  alert: f.psi_score > 0.1,
- }));
- }).flat().slice(0, 8) : [];
+ }))
+ : [];
 
  if (bars.length === 0) {
  return (

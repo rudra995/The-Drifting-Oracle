@@ -37,6 +37,7 @@ import numpy as np
 import pandas as pd
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 import config
 import databricks_io
@@ -47,10 +48,11 @@ from preprocessing import (
     prepare_champion_input,
     prepare_challenger_input,
     engineer_champion_features,
+    reshape_raw_kaggle_columns,
     get_risk_label,
 )
 from schemas import PredictRequest
-from llm_explanation import generate_explanation, generate_batch_explanation
+from llm_graph import run_explanation_graph
 
 
 # ----------------------------------------------
@@ -73,6 +75,13 @@ async def lifespan(app: FastAPI):
         if os.path.exists(path):
             try:
                 config.BASELINE_DATA = pd.read_csv(path)
+
+                # Raw Kaggle files (e.g. application_train.csv) still use
+                # Kaggle's original column names/types -- reshape them into
+                # the schema engineer_champion_features() expects. A no-op
+                # on files that are already in that schema (AMT_CREDIT_x
+                # etc. already present).
+                config.BASELINE_DATA = reshape_raw_kaggle_columns(config.BASELINE_DATA)
 
                 # Engineer features on baseline so PSI features like
                 # income_credit_ratio are available for comparison
@@ -135,6 +144,18 @@ app.add_middleware(
 # ----------------------------------------------
 # Core Prediction Pipeline
 # ----------------------------------------------
+
+def _error(status_code: int, message: str) -> JSONResponse:
+    """A failure response with a real HTTP status code attached.
+
+    Every failure path used to `return {"status": "failed", "error": ...}`
+    with FastAPI's default 200 -- any client that checks the HTTP status
+    code rather than parsing the body would see every one of these as a
+    success. Keeps the same body shape the frontend already checks
+    (`result.status !== 'success'`), just with a correct status code.
+    """
+    return JSONResponse(status_code=status_code, content={"status": "failed", "error": message})
+
 
 def select_model(drift_detected: bool) -> tuple:
     """
@@ -205,77 +226,84 @@ async def health():
 async def predict(data: PredictRequest):
     """
     Single-row prediction via JSON input.
-    Returns probability + risk label + PSI status.
+    Returns probability + risk label.
+
+    PSI is a population-level statistic -- it is not computed here and does
+    not select a model. A histogram of a single data point against 10
+    quantile bins always puts 100% of the mass in one bin, which produces an
+    extreme PSI (empirically ~12+) regardless of how typical the applicant
+    is; verified live by feeding it an applicant set to the literal median
+    of every baseline feature, which still scored PSI~12.5. Population drift
+    is only meaningful, and only computed, on a batch (see /predict_batch).
+    Single-row prediction always uses the Champion model.
     """
     if config.MODEL is None:
-        return {"status": "failed", "error": "Model not loaded"}
+        return _error(503, "Model not loaded")
 
     input_dict = data.model_dump()
 
     # Create a single-row DataFrame
     input_df = pd.DataFrame([input_dict])
 
-    # Compute PSI against baseline
-    input_df_engineered = engineer_champion_features(input_df)
-    overall_psi, psi_per_feature, drift_detected = calculate_multi_feature_psi(input_df_engineered)
-
-    # Select model
-    model, model_used = select_model(drift_detected)
+    model, model_used = config.MODEL, "Champion"
 
     # Prepare features for the selected model
     try:
-        if model_used == "Champion":
-            model_input = prepare_champion_input(input_df)
-        else:
-            model_input = prepare_challenger_input(input_df)
+        model_input = prepare_champion_input(input_df)
     except Exception as e:
-        return {"status": "failed", "error": f"Feature preparation failed: {str(e)}"}
+        return _error(400, f"Feature preparation failed: {str(e)}")
+    missing_features = model_input.attrs.get("missing_features", [])
 
     # Predict
     try:
         predictions = run_predictions(model, model_input)
     except Exception as e:
-        return {"status": "failed", "error": f"Prediction failed: {str(e)}"}
+        return _error(400, f"Prediction failed: {str(e)}")
 
     pred = predictions[0]
 
-    # Generate LLM explanation
-    psi_status = "drift_detected" if drift_detected else "no_drift"
-    llm_result = generate_explanation(pred["probability"], overall_psi, psi_status)
-    
-    print(f"[predict] LLM Used: {llm_result['llm_used']}")
+    # Generate LLM explanation via the predict->explain->evaluate graph
+    # (retries once, with feedback, if the grounding check flags a
+    # hallucination on the first attempt -- see llm_graph.py). Single-row
+    # predict has no population-level drift signal (see docstring above),
+    # so the graph is always given "no_drift".
+    graph_result = run_explanation_graph("single", pred["probability"], 0.0, "no_drift")
+    llm_result = {"explanation": graph_result["explanation"], "llm_used": graph_result["llm_used"]}
+
+    print(f"[predict] LLM Used: {llm_result['llm_used']} (attempts={graph_result['attempts']}, retried={graph_result['retried']})")
 
     # Track
     config.PREDICTION_COUNT += 1
-    if drift_detected:
-        config.DRIFT_COUNT += 1
-    
-    # Log LLM evaluation for monitoring
-    eval_record = config.log_llm_evaluation(llm_result["explanation"], llm_result["llm_used"], pred["probability"])
 
-    decision = "Reject Loan" if pred["probability"] >= 0.5 else "Accept Loan"
+    # Log LLM evaluation for monitoring (eval already computed by the graph)
+    eval_record = config.log_llm_evaluation(
+        llm_result["explanation"], llm_result["llm_used"], pred["probability"], eval_result=graph_result["eval_result"]
+    )
+
+    decision = "Reject Loan" if pred["probability"] >= config.get_decision_threshold() else "Accept Loan"
     databricks_io.insert_prediction(
         total_rows=1,
         avg_probability=pred["probability"],
-        default_rate=1.0 if pred["probability"] >= 0.5 else 0.0,
+        default_rate=1.0 if pred["probability"] >= config.get_decision_threshold() else 0.0,
         model_used=model_used,
-        overall_psi=overall_psi,
-        drift_detected=drift_detected,
+        overall_psi=None,
+        drift_detected=False,
         decision=decision,
     )
 
     return {
         "status": "success",
-        "psi": overall_psi,
-        "psi_per_feature": psi_per_feature,
-        "drift_detected": drift_detected,
         "model_used": model_used,
         "probability": pred["probability"],
         "risk_label": pred["risk_label"],
         "decision": decision,
         "explanation": llm_result["explanation"],
         "explanation_llm": llm_result["llm_used"],
-        "llm_evaluation": eval_record["evaluation"]
+        "llm_evaluation": eval_record["evaluation"],
+        "warnings": (
+            [f"Column(s) not found in input, defaulted to 0: {', '.join(missing_features)}"]
+            if missing_features else []
+        ),
     }
 
 
@@ -305,10 +333,10 @@ async def predict_batch(file: UploadFile = File(...)):
     """
     # -- Guard: file type ------------------------
     if not file.filename.endswith(".csv"):
-        return {"status": "failed", "error": "Only .csv files are supported."}
+        return _error(400, "Only .csv files are supported.")
 
     if config.MODEL is None:
-        return {"status": "failed", "error": "Champion model not loaded."}
+        return _error(503, "Champion model not loaded.")
 
     # -- Step 1: Parse CSV ----------------------
     try:
@@ -316,12 +344,12 @@ async def predict_batch(file: UploadFile = File(...)):
     except pd.errors.EmptyDataError:
         # A genuinely empty file raises here -- pandas never gets far enough
         # to hand back a DataFrame for the df.empty check below to catch.
-        return {"status": "failed", "error": "CSV file is empty."}
+        return _error(400, "CSV file is empty.")
     except Exception as e:
-        return {"status": "failed", "error": f"Invalid CSV file: {str(e)}"}
+        return _error(400, f"Invalid CSV file: {str(e)}")
 
     if df.empty:
-        return {"status": "failed", "error": "CSV file is empty."}
+        return _error(400, "CSV file is empty.")
 
     print(f"\n[predict_batch] Received CSV: {len(df)} rows, {len(df.columns)} columns")
     print(f"[predict_batch] Columns: {list(df.columns)}")
@@ -354,14 +382,15 @@ async def predict_batch(file: UploadFile = File(...)):
             model_input = prepare_champion_input(df)
         else:
             model_input = prepare_challenger_input(df)
+        missing_features = model_input.attrs.get("missing_features", [])
     except Exception as e:
-        return {"status": "failed", "error": f"Feature preparation failed: {str(e)}"}
+        return _error(400, f"Feature preparation failed: {str(e)}")
 
     # -- Step 6: Predictions (predict_proba) ----
     try:
         predictions = run_predictions(model, model_input)
     except Exception as e:
-        return {"status": "failed", "error": f"Prediction failed: {str(e)}"}
+        return _error(400, f"Prediction failed: {str(e)}")
 
     # -- Step 7: Tracking & Governance ----------
     config.PREDICTION_COUNT += len(df)
@@ -384,27 +413,37 @@ async def predict_batch(file: UploadFile = File(...)):
             f"Switched to {model_used} model.",
             model_used,
         )
-        retrain.maybe_trigger_retrain()
+        retrain.maybe_trigger_retrain(df)
 
     # -- Step 8: Compute Summary Statistics (before LLM explanation) ----
     probabilities = [p["probability"] for p in predictions]
     avg_probability = round(sum(probabilities) / len(probabilities), 4) if probabilities else 0.0
-    default_rate = round(sum(1 for p in probabilities if p >= 0.5) / len(probabilities), 4) if probabilities else 0.0
+    default_rate = round(sum(1 for p in probabilities if p >= config.get_decision_threshold()) / len(probabilities), 4) if probabilities else 0.0
 
     risk_counts = {"Low": 0, "Medium": 0, "High": 0}
     for p in predictions:
         risk_counts[p["risk_label"]] += 1
 
-    # -- Step 9: Generate LLM Explanation -------
+    # -- Step 9: Generate LLM Explanation via the predict->explain->evaluate
+    #    graph (retries once, with feedback, on a flagged hallucination) --
     psi_status = "drift_detected" if drift_detected else "no_drift"
-    llm_result = generate_batch_explanation(default_rate, overall_psi, psi_status)
-    
-    print(f"[predict_batch] LLM Used: {llm_result['llm_used']}")
+    graph_result = run_explanation_graph("batch", default_rate, overall_psi, psi_status)
+    llm_result = {"explanation": graph_result["explanation"], "llm_used": graph_result["llm_used"]}
 
-    # -- Step 10: Log LLM Evaluation -------
-    eval_record = config.log_llm_evaluation(llm_result["explanation"], llm_result["llm_used"], default_rate)
+    print(f"[predict_batch] LLM Used: {llm_result['llm_used']} (attempts={graph_result['attempts']}, retried={graph_result['retried']})")
+
+    # -- Step 10: Log LLM Evaluation (eval already computed by the graph) --
+    eval_record = config.log_llm_evaluation(
+        llm_result["explanation"], llm_result["llm_used"], default_rate, eval_result=graph_result["eval_result"]
+    )
 
     # -- Step 10b: Log Prediction Batch (Delta) ----
+    # This 0.5 is a separate, batch-level policy choice ("reject the whole
+    # batch if more than half its individual rows look risky") -- distinct
+    # from config.get_decision_threshold(), which already went into
+    # computing default_rate above at the per-row level. Not a hardcoded
+    # leftover to fix; a real deployment might tune this ratio too, but
+    # that's a portfolio-level risk-appetite call, not a model calibration one.
     batch_decision = "Reject Loan" if default_rate >= 0.5 else "Accept Loan"
     databricks_io.insert_prediction(
         total_rows=len(df),
@@ -437,6 +476,10 @@ async def predict_batch(file: UploadFile = File(...)):
         "explanation_llm": llm_result["llm_used"],
         "llm_evaluation": eval_record["evaluation"],
         "predictions": predictions,
+        "warnings": (
+            [f"Column(s) not found in input, defaulted to 0 for every row: {', '.join(missing_features)}"]
+            if missing_features else []
+        ),
     }
 
 
@@ -472,7 +515,7 @@ async def fill_window(count: int = 50, drift: bool = False):
     import random
 
     if config.BASELINE_DATA is None:
-        return {"status": "failed", "error": "Baseline data not loaded."}
+        return _error(503, "Baseline data not loaded.")
 
     # Sample rows from baseline
     sample_df = config.BASELINE_DATA.sample(n=min(count, len(config.BASELINE_DATA)), replace=True).reset_index(drop=True)
@@ -550,16 +593,25 @@ async def drift_history():
 
 @app.get("/api/v1/models")
 async def get_models():
-    """Return info about loaded models."""
+    """Return info about loaded models, with real metrics from the last
+    scripts/train.py run (config.MODEL_METRICS, mirrored locally from MLflow
+    -- see model_loader.load_model_metrics)."""
     models = []
+    champion_metrics = config.MODEL_METRICS.get("champion", {})
+    challenger_metrics = config.MODEL_METRICS.get("challenger", {})
     if config.MODEL is not None:
         models.append({
             "model_id": "champion-home-credit",
             "version": "v1.0",
             "type": "champion",
             "status": "active",
-            "training_date": "Pre-trained",
-            "metrics": {"auc": None, "precision": None, "recall": None},
+            "training_date": champion_metrics.get("trained_at", "Pre-trained"),
+            "metrics": {
+                "auc": champion_metrics.get("auc"),
+                "precision": champion_metrics.get("precision"),
+                "recall": champion_metrics.get("recall"),
+                "f1": champion_metrics.get("f1"),
+            },
         })
     if config.GERMAN_MODEL is not None:
         models.append({
@@ -567,8 +619,13 @@ async def get_models():
             "version": "v1.0",
             "type": "challenger",
             "status": "standby",
-            "training_date": "Pre-trained",
-            "metrics": {"auc": None, "precision": None, "recall": None},
+            "training_date": challenger_metrics.get("trained_at", "Pre-trained"),
+            "metrics": {
+                "auc": challenger_metrics.get("auc"),
+                "precision": challenger_metrics.get("precision"),
+                "recall": challenger_metrics.get("recall"),
+                "f1": challenger_metrics.get("f1"),
+            },
         })
     return models
 

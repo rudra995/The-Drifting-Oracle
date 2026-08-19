@@ -36,14 +36,27 @@ GEMINI_MAX_TOKENS = 300
 
 SINGLE_PREDICTION_PROMPT_TEMPLATE = """Loan Application Risk Assessment
 
-Probability: {prediction:.1%} ({decision})
+Probability of Default: {prediction:.1%} ({decision})
 Data Reliability: {reliability}
 
-Provide a single-line technical assessment (1 sentence max):
-- Is the system's prediction reliable for this application?
-- Any data concerns or red flags?
+Real regulations retrieved from the compliance database (cite ONE of these
+by paraphrasing it in your own words -- do not invent a different circular
+number, date, or percentage than what is shown here):
+{context}
 
-Be direct and concise."""
+State the regulatory justification for this decision as ONE terse, factual
+sentence, paraphrasing ONE of the regulations listed above -- name what it's
+about (e.g. "risk-based underwriting", "the Fair Practices Code") rather
+than inventing a circular/citation number of your own. If none of the
+regulations above genuinely fit this decision, say the decision follows
+standard risk-based underwriting practice rather than inventing a specific
+citation. Mention data reliability only if it is a concern. The percentage
+above is a probability of DEFAULT (risk of non-repayment), not a probability
+of approval -- do not restate it as "probability of approval" or similar.
+
+Do NOT include a greeting, an apology, a closing pleasantry, or filler such
+as "we appreciate your understanding" or "thank you" -- output only the
+factual justification sentence itself, nothing else."""
 
 
 BATCH_PREDICTION_PROMPT_TEMPLATE = """Batch Loan Risk Analysis
@@ -52,11 +65,21 @@ Default Rate: {default_rate:.1%}
 Data Reliability: {reliability}
 Batch Decision: {batch_decision}
 
-Single-line technical summary (1 sentence max):
-- Is the batch safe to process?
-- Any systemic risks detected?
+Real regulations retrieved from the compliance database (cite ONE of these
+by paraphrasing it in your own words -- do not invent a different circular
+number, date, or percentage than what is shown here):
+{context}
 
-Direct and actionable only."""
+State the regulatory justification for this batch decision as ONE terse,
+factual sentence, paraphrasing ONE of the regulations listed above -- name
+what it's about (e.g. "risk-based underwriting", "portfolio risk limits")
+rather than inventing a circular/citation number of your own. If none of the
+regulations above genuinely fit, say the decision follows standard
+portfolio risk management practice rather than inventing a specific
+citation. Mention systemic risk or data reliability only if it is a concern.
+
+Do NOT include a greeting, an apology, a closing pleasantry, or any filler --
+output only the factual justification sentence itself, nothing else."""
 
 
 # ============================================================================

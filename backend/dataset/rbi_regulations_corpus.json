@@ -1,0 +1,259 @@
+{
+  "_meta": {
+    "purpose": "Ground-truth corpus for the LLM hallucination/grounding evaluator (llm_evaluator.py). Replaces the old hardcoded 16-item list in rbi_sebi_ground_truth.md with an independently web-verified set, ingested into ChromaDB by scripts/setup_chromadb.py.",
+    "verification_date": "2026-08-14",
+    "verification_method": "WebSearch/WebFetch against rbi.org.in primary notifications where reachable, cross-checked with law-firm client alerts (Vinod Kothari, Cyril Amarchand Mangaldas, ibclaw.in) and secondary compliance sources where RBI's own site was unnavigable.",
+    "confidence_scale": {
+      "VERIFIED": "Found on a primary RBI/SEBI source or a directly-quoted primary PDF",
+      "LIKELY": "Consistent, credible secondary source (law firm alert, compliance publisher); primary text not directly fetched",
+      "SUPERSEDED": "Was once accurate but a newer instrument has replaced or amended it"
+    }
+  },
+
+  "valid_regulations": [
+    {
+      "id": "RBI_DLD_2025_001",
+      "title": "Direct disbursal to borrower's bank account",
+      "rule": "Loan disbursement must be made directly into the borrower's bank account. Disbursal to a third-party or pooled account, including an LSP or Digital Lending App account, is prohibited.",
+      "category": "digital_lending",
+      "source": "RBI (Digital Lending) Directions, 2025",
+      "citation": "RBI/2025-26/36, DOR.STR.REC.19/21.07.001/2025-26",
+      "effective_date": "2025-05-08",
+      "url": "https://rbi.org.in/Scripts/NotificationUser.aspx?Id=12848",
+      "confidence": "VERIFIED"
+    },
+    {
+      "id": "RBI_DLD_2025_002",
+      "title": "Data localization",
+      "rule": "All digital lending data must be stored exclusively on servers located in India. If any processing happens abroad, the data must be deleted and repatriated to India within 24 hours.",
+      "category": "digital_lending",
+      "source": "RBI (Digital Lending) Directions, 2025",
+      "citation": "RBI/2025-26/36, DOR.STR.REC.19/21.07.001/2025-26",
+      "effective_date": "2025-05-08",
+      "url": "https://rbi.org.in/Scripts/NotificationUser.aspx?Id=12848",
+      "confidence": "VERIFIED",
+      "thresholds": [
+        {"value": 24, "unit": "hour", "type": "cap", "meaning": "must delete/repatriate within this many hours -- sooner is fine, longer violates"}
+      ]
+    },
+    {
+      "id": "RBI_DLD_2025_003",
+      "title": "Regulated Entity accountable for Lending Service Providers",
+      "rule": "The Regulated Entity (RE) remains fully responsible for the conduct of its Lending Service Providers (LSPs) and Digital Lending Apps, and must perform enhanced due diligence and ongoing monitoring of them.",
+      "category": "digital_lending",
+      "source": "RBI (Digital Lending) Directions, 2025",
+      "citation": "RBI/2025-26/36, DOR.STR.REC.19/21.07.001/2025-26",
+      "effective_date": "2025-05-08",
+      "url": "https://rbi.org.in/Scripts/NotificationUser.aspx?Id=12848",
+      "confidence": "VERIFIED"
+    },
+    {
+      "id": "RBI_DLD_2025_004",
+      "title": "Consent-based, minimal data collection",
+      "rule": "Borrower data collection must be purpose-specific, consent-based, and minimal, aligned with the Digital Personal Data Protection (DPDP) Act, 2023. Access to device resources like contacts or call logs is prohibited except for one-time KYC.",
+      "category": "digital_lending",
+      "source": "RBI (Digital Lending) Directions, 2025",
+      "citation": "RBI/2025-26/36, DOR.STR.REC.19/21.07.001/2025-26",
+      "effective_date": "2025-05-08",
+      "url": "https://rbi.org.in/Scripts/NotificationUser.aspx?Id=12848",
+      "confidence": "VERIFIED"
+    },
+    {
+      "id": "RBI_DLD_2025_005",
+      "title": "CIMS portal registration for digital lending apps",
+      "rule": "Regulated Entities must report every deployed Digital Lending App to RBI's Centralised Information Management System (CIMS) portal. Original reporting deadline was June 15, 2025; multi-lender-platform-specific provisions took effect November 1, 2025.",
+      "category": "digital_lending",
+      "source": "RBI (Digital Lending) Directions, 2025",
+      "citation": "RBI/2025-26/36, DOR.STR.REC.19/21.07.001/2025-26",
+      "effective_date": "2025-05-08",
+      "url": "https://rbi.org.in/Scripts/NotificationUser.aspx?Id=12848",
+      "confidence": "VERIFIED"
+    },
+    {
+      "id": "RBI_DLD_2025_006",
+      "title": "Minimum loan look-up (cooling) period before prepayment",
+      "rule": "Borrowers must be given a minimum 1-day look-up/cooling period (for loans with tenor of 7 days or more) during which they may exit the loan by paying principal and proportionate APR, without penalty.",
+      "category": "digital_lending",
+      "source": "RBI (Digital Lending) Directions, 2025",
+      "citation": "RBI/2025-26/36, DOR.STR.REC.19/21.07.001/2025-26",
+      "effective_date": "2025-05-08",
+      "url": "https://rbi.org.in/Scripts/NotificationUser.aspx?Id=12848",
+      "confidence": "VERIFIED",
+      "note": "This is the real rule commonly confused with a fabricated '30-day cooling-off before reassessing a rejected application' claim -- see invalid_regulations HALLUC_005.",
+      "thresholds": [
+        {"value": 1, "unit": "day", "type": "floor", "meaning": "borrowers must get at least this many days -- more is fine, fewer violates"}
+      ]
+    },
+    {
+      "id": "RBI_DLG_2023_001",
+      "title": "Default Loss Guarantee (DLG) cap",
+      "rule": "Default Loss Guarantee (DLG) cover in digital lending arrangements is capped at 5% of the outstanding loan portfolio it backs, must be specified upfront, backed by cash/FD/bank guarantee, and invoked within 120 days of the underlying loan going overdue.",
+      "category": "digital_lending",
+      "source": "Guidelines on Default Loss Guarantee (DLG) in Digital Lending",
+      "citation": "RBI/2023-24/41, DOR.CRE.REC.21/21.07.001/2023-24",
+      "effective_date": "2023-06-08",
+      "url": "https://ibclaw.in/rbi-guidelines-on-default-loss-guarantee-dlg-in-digital-lending-dated-08-06-2023/",
+      "confidence": "VERIFIED",
+      "thresholds": [
+        {"value": 5, "unit": "%", "type": "cap", "meaning": "hard maximum -- a lower DLG is fine, a higher one violates the cap"},
+        {"value": 120, "unit": "day", "type": "cap", "meaning": "must invoke by this many days after default -- sooner is fine, later violates"}
+      ]
+    },
+    {
+      "id": "RBI_CLA_2025_001",
+      "title": "Co-lending: originating lender DLG cap",
+      "rule": "In co-lending arrangements, the originating lender may provide a default loss guarantee of up to 5% of the loan amount. Each co-lender reports its own share to credit information companies; if one lender classifies the loan as NPA, the other must too.",
+      "category": "digital_lending",
+      "source": "RBI (Co-Lending Arrangements) Directions, 2025",
+      "citation": "RBI/DOR/2025-26/139, DOR.STR.REC.44/13.07.010/2025-26",
+      "issued_date": "2025-08-06",
+      "effective_date": "2026-01-01",
+      "url": "https://corporate.cyrilamarchandblogs.com/2025/09/analysis-of-rbi-co-lending-arrangements-directions-2025/",
+      "confidence": "VERIFIED",
+      "note": "The document itself is dated 2025 and replaces the 2020 Co-Lending Model circular; only its APPLICABILITY date is 2026. Citing this as 'Co-Lending Guidelines, 2026' (as if the instrument were issued in 2026) is an error -- see invalid_regulations HALLUC_007.",
+      "thresholds": [
+        {"value": 5, "unit": "%", "type": "cap", "meaning": "hard maximum -- a lower originating-lender DLG is fine, a higher one violates the cap"}
+      ]
+    },
+    {
+      "id": "RBI_RW_2023_001",
+      "title": "Risk weight on unsecured consumer credit",
+      "rule": "Risk weight on unsecured consumer credit (including personal loans) was increased from 100% to 125% for both banks and NBFCs, excluding housing, education, vehicle loans, and gold-backed loans. NBFC microfinance/SHG loans are also excluded. A February 2025 notification partially eased this for bank-originated microfinance loans.",
+      "category": "capital_prudential",
+      "source": "Regulatory measures towards consumer credit and bank credit to NBFCs",
+      "citation": "RBI/2023-24/85, DOR.STR.REC.57/21.06.001/2023-24",
+      "effective_date": "2023-11-16",
+      "url": "https://www.maximusinfoware.in/pdf/rbi-circulars/regulatory-measures-towards-consumer-credit-and-bank-credit-to-nbfcs.pdf",
+      "confidence": "VERIFIED",
+      "thresholds": [
+        {"value": 125, "unit": "%", "type": "floor", "meaning": "mandated MINIMUM -- RBI's own text says '125% or higher based on internal assessment', so a higher figure is still compliant; only a lower figure violates"}
+      ]
+    },
+    {
+      "id": "RBI_KYC_2016_001",
+      "title": "Enhanced KYC due diligence",
+      "rule": "Lenders must apply risk-based customer due diligence, may use Video-based Customer Identification Process (V-CIP) for digital onboarding, and must retain KYC records for 5 years after the account relationship ends.",
+      "category": "kyc_aml",
+      "source": "Master Direction - Know Your Customer (KYC) Direction, 2016",
+      "citation": "DBR.AML.BC.No.81/14.01.001/2015-16",
+      "effective_date": "2016-02-25",
+      "amended_through": "2024-2025",
+      "url": "https://www.rbi.org.in/commonman/Upload/English/Notification/PDFs/MD18KYCF6E92C82E1E1419D87323E3869BC9F13.pdf",
+      "confidence": "VERIFIED",
+      "thresholds": [
+        {"value": 5, "unit": "year", "type": "floor", "meaning": "records must be kept at least this long -- longer retention is fine, shorter violates"}
+      ]
+    },
+    {
+      "id": "RBI_IRAC_001",
+      "title": "NPA classification and provisioning (IRAC norms)",
+      "rule": "Income recognition and asset classification must follow objective, time-based criteria rather than subjective judgment. Advances with realizable security value below 10% of the outstanding balance must be classified straight to 'loss asset' and provided for/written off in full.",
+      "category": "prudential",
+      "source": "Master Circular - Prudential Norms on Income Recognition, Asset Classification and Provisioning pertaining to Advances",
+      "citation": "RBI/2024-25/12 (annually reissued master circular)",
+      "url": "https://www.rbi.org.in/upload/notification/pdfs/59027.pdf",
+      "confidence": "VERIFIED",
+      "thresholds": [
+        {"value": 10, "unit": "%", "type": "exact", "meaning": "the specific classification cutoff -- a claim citing a different cutoff percentage misstates the rule"}
+      ]
+    },
+    {
+      "id": "RBI_MODELRISK_2024_001",
+      "title": "Credit model risk governance",
+      "rule": "Regulated Entities using models (including scorecards) for credit decisions must have a Board-approved policy covering model development, validation, documentation, and ongoing monitoring. New models must comply within 3 months of deployment; existing models must be validated within 6 months.",
+      "category": "model_governance",
+      "source": "Regulatory Principles for Management of Model Risks in Credit (draft circular)",
+      "issued_date": "2024-08-05",
+      "updated_date": "2026-06-25",
+      "url": "https://taxguru.in/rbi/rbi-draft-circular-regulatory-principles-management-model-risks-credit.html",
+      "confidence": "LIKELY",
+      "note": "Supersedes RBI's older 2002 Guidance Note on Credit Risk Management, which is largely historical at this point.",
+      "thresholds": [
+        {"value": 3, "unit": "month", "type": "cap", "meaning": "new models must comply within this many months -- sooner is fine, later violates"},
+        {"value": 6, "unit": "month", "type": "cap", "meaning": "existing models must be validated within this many months -- sooner is fine, later violates"}
+      ]
+    },
+    {
+      "id": "SEBI_JURISDICTION_001",
+      "title": "SEBI has no jurisdiction over personal lending",
+      "rule": "SEBI's statutory mandate (SEBI Act, 1992) covers protecting investors in securities and regulating the securities market -- stock exchanges, mutual funds, listed companies, IPOs, intermediaries. SEBI has no jurisdiction over bank/NBFC personal loan interest rates, underwriting, or KYC-for-lending; that domain belongs exclusively to RBI under the Banking Regulation Act and RBI Act.",
+      "category": "jurisdiction",
+      "source": "SEBI Act, 1992 (preamble)",
+      "url": "https://www.sebi.gov.in/acts/act15ac.pdf",
+      "confidence": "VERIFIED",
+      "note": "Use this as the grounding fact for ANY claim that cites 'SEBI' as the authority for personal-loan lending rules -- such a claim is fabricated by definition."
+    },
+    {
+      "id": "RBI_FPC_2003_001",
+      "title": "Fair Practices Code -- repayment capacity assessment",
+      "rule": "Every Regulated Entity must publish an RBI-mandated Fair Practices Code and, per the framework, assess a borrower's repayment capacity / EMI headroom before approving a loan.",
+      "category": "bank_policy",
+      "source": "RBI Fair Practices Code framework (originated 2003, each RE publishes its own FPC document within it)",
+      "example_source": "Bajaj Finance Ltd. Fair Practice Code, Ver 7.1",
+      "example_date": "2026-01",
+      "url": "https://cms-assets.bajajfinserv.in/is/content/bajajfinance/fair-practice-code-ver-7-jan-2026-english?scl=1&fmt=pdf",
+      "confidence": "LIKELY",
+      "note": "This is bank/NBFC POLICY LANGUAGE describing compliance with an RBI framework, not primary RBI regulatory text itself -- tagged category=bank_policy so the evaluator can distinguish it from primary-source chunks."
+    }
+  ],
+
+  "invalid_regulations": [
+    {
+      "id": "HALLUC_001",
+      "claim": "RBI mandates immediate rejection of all applications from borrowers with income below ₹2 lakhs per annum",
+      "why_false": "RBI provides no universal income threshold; lending is required to be a risk-based assessment, not a blanket cutoff.",
+      "true_rule_id": "RBI_MODELRISK_2024_001",
+      "true_rule": "Risk-based pricing and underwriting are required; no blanket income limits exist in RBI regulation.",
+      "confidence": "LIKELY"
+    },
+    {
+      "id": "HALLUC_002",
+      "claim": "RBI Circular 2024-11 mandates notarized documents for all loan applicants",
+      "why_false": "No such circular exists. Digital, digitally-signed documentation via email/SMS is explicitly permitted.",
+      "true_rule_id": "RBI_DLD_2025_004",
+      "true_rule": "Digital KYC and digitally signed documents are permitted under the RBI (Digital Lending) Directions, 2025.",
+      "confidence": "LIKELY"
+    },
+    {
+      "id": "HALLUC_003",
+      "claim": "Section 42(A) of the RBI Act prohibits lending to self-employed individuals without 5 years of tax returns",
+      "why_false": "No such section imposes a uniform 5-year requirement; while self-employed borrowers face more scrutiny, specific document requirements vary by lender policy under RBI's KYC framework.",
+      "true_rule_id": "RBI_KYC_2016_001",
+      "true_rule": "Enhanced due diligence is required for self-employed applicants, but the specific document list is lender-determined within RBI's risk-based KYC framework, not fixed by statute at 5 years.",
+      "confidence": "LIKELY"
+    },
+    {
+      "id": "HALLUC_004",
+      "claim": "SEBI prohibits NBFCs from offering personal loans below 12% interest rate",
+      "why_false": "SEBI has no jurisdiction over NBFC lending or interest rates at all -- that is RBI's domain, and NBFC interest rates are deregulated (Board-determined).",
+      "true_rule_id": "SEBI_JURISDICTION_001",
+      "true_rule": "SEBI regulates securities markets, not bank/NBFC lending; NBFC interest rates are deregulated and set by each Board's own policy on cost of funds, margin, and risk premium.",
+      "confidence": "VERIFIED"
+    },
+    {
+      "id": "HALLUC_005",
+      "claim": "RBI requires a 30-day cooling-off period before a lender may reassess a previously rejected loan application",
+      "why_false": "No RBI source ties a fixed 30-day period to reassessment of rejected applications. This appears to conflate two unrelated real rules: a 1-day minimum look-up/prepayment period, and a 30-day window for escalating an unresolved grievance to RBI's Complaint Management System.",
+      "true_rule_id": "RBI_DLD_2025_006",
+      "true_rule": "The real cooling/look-up period in RBI's digital lending framework is a minimum of 1 day (for prepayment without penalty), not 30 days, and it is unrelated to reassessment timing.",
+      "confidence": "LIKELY",
+      "note": "This claim was treated as a VALID regulation in the project's original hardcoded ground truth. Research could not verify it; reclassified here as a fabrication example."
+    },
+    {
+      "id": "HALLUC_006",
+      "claim": "RBI mandates that all loans above ₹5 lakhs require government-backed collateral",
+      "why_false": "Unsecured personal loans are explicitly permitted at any amount; RBI's response to unsecured-loan risk is higher capital risk-weighting, not a collateral mandate.",
+      "true_rule_id": "RBI_RW_2023_001",
+      "true_rule": "Risk-weighting varies by loan type (125% for most unsecured consumer credit); collateral is not mandated for personal loans regardless of amount.",
+      "confidence": "LIKELY"
+    },
+    {
+      "id": "HALLUC_007",
+      "claim": "RBI's Co-Lending Arrangement Guidelines, 2026 govern DLG-backed co-lending partnerships",
+      "why_false": "The actual instrument is the RBI (Co-Lending Arrangements) Directions, 2025 (RBI/DOR/2025-26/139), issued August 6, 2025. 2026 is only its applicability/effective date, not the year it was issued -- citing it as '...Guidelines, 2026' misstates the source.",
+      "true_rule_id": "RBI_CLA_2025_001",
+      "true_rule": "RBI (Co-Lending Arrangements) Directions, 2025 (RBI/DOR/2025-26/139, dated 2025-08-06), effective from 2026-01-01.",
+      "confidence": "VERIFIED"
+    }
+  ]
+}

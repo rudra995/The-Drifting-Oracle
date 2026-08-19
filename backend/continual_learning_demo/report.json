@@ -1,0 +1,88 @@
+{
+  "eval_pool_size": 46127,
+  "era_size": 65346,
+  "era_shifts": {
+    "0": [
+      1.0,
+      0.0
+    ],
+    "1": [
+      1.15,
+      -0.05
+    ],
+    "2": [
+      1.3,
+      -0.1
+    ],
+    "3": [
+      1.5,
+      -0.15
+    ]
+  },
+  "era0_model_auc_on_general_eval": 0.7468,
+  "eras": [
+    {
+      "era": 1,
+      "rows_in_era": 65346,
+      "cumulative_training_rows": 130692,
+      "psi_vs_baseline": 0.1114,
+      "drift_detected": false,
+      "psi_per_feature": {
+        "AMT_INCOME_TOTAL": 0.2929,
+        "AMT_CREDIT_x": 0.143,
+        "AMT_ANNUITY": 0.0714,
+        "DAYS_EMPLOYED": 0.0002,
+        "EXT_SOURCE_2": 0.1883,
+        "EXT_SOURCE_3": 0.0836,
+        "income_credit_ratio": 0.0003
+      },
+      "auc_before_retrain": 0.7403,
+      "auc_after_retrain": 0.7947,
+      "auc_delta": 0.0543,
+      "auc_general_eval_pool_after_retrain": 0.7559,
+      "retrain_seconds": 0.9
+    },
+    {
+      "era": 2,
+      "rows_in_era": 65346,
+      "cumulative_training_rows": 196038,
+      "psi_vs_baseline": 0.3686,
+      "drift_detected": true,
+      "psi_per_feature": {
+        "AMT_INCOME_TOTAL": 0.5151,
+        "AMT_CREDIT_x": 0.2505,
+        "AMT_ANNUITY": 0.2487,
+        "DAYS_EMPLOYED": 0.0002,
+        "EXT_SOURCE_2": 1.1216,
+        "EXT_SOURCE_3": 0.4438,
+        "income_credit_ratio": 0.0004
+      },
+      "auc_before_retrain": 0.7467,
+      "auc_after_retrain": 0.7795,
+      "auc_delta": 0.0328,
+      "auc_general_eval_pool_after_retrain": 0.7574,
+      "retrain_seconds": 1.2
+    },
+    {
+      "era": 3,
+      "rows_in_era": 65346,
+      "cumulative_training_rows": 261384,
+      "psi_vs_baseline": 0.8809,
+      "drift_detected": true,
+      "psi_per_feature": {
+        "AMT_INCOME_TOTAL": 0.9863,
+        "AMT_CREDIT_x": 0.4596,
+        "AMT_ANNUITY": 0.5521,
+        "DAYS_EMPLOYED": 0.0002,
+        "EXT_SOURCE_2": 2.5066,
+        "EXT_SOURCE_3": 1.6614,
+        "income_credit_ratio": 0.0004
+      },
+      "auc_before_retrain": 0.7431,
+      "auc_after_retrain": 0.7702,
+      "auc_delta": 0.0272,
+      "auc_general_eval_pool_after_retrain": 0.7547,
+      "retrain_seconds": 1.3
+    }
+  ]
+}

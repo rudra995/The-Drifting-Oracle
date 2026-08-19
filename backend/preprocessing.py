@@ -20,6 +20,34 @@ import config
 
 
 # --------------------------------------------
+#  Raw Kaggle column reshaping (shared by training and PSI baseline)
+# --------------------------------------------
+
+def reshape_raw_kaggle_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Rename/one-hot the handful of raw Kaggle Home Credit columns that need
+    it before engineer_champion_features() can run: AMT_CREDIT -> AMT_CREDIT_x,
+    and CODE_GENDER/FLAG_OWN_CAR/FLAG_OWN_REALTY -> their one-hot flag columns.
+
+    Used both by scripts/train.py (so the model trains on the same schema it
+    serves) and by the PSI baseline loader in main.py's startup (so the PSI
+    baseline is built from the same raw source, with the same missing-value
+    handling, as a live incoming batch -- see reshape note in psi.py).
+    """
+    df = df.copy()
+    if "AMT_CREDIT" in df.columns and "AMT_CREDIT_x" not in df.columns:
+        df = df.rename(columns={"AMT_CREDIT": "AMT_CREDIT_x"})
+    if "CODE_GENDER" in df.columns:
+        df["CODE_GENDER_M"] = (df["CODE_GENDER"] == "M").astype(int)
+        df["CODE_GENDER_XNA"] = (df["CODE_GENDER"] == "XNA").astype(int)
+    if "FLAG_OWN_CAR" in df.columns:
+        df["FLAG_OWN_CAR_Y"] = (df["FLAG_OWN_CAR"] == "Y").astype(int)
+    if "FLAG_OWN_REALTY" in df.columns:
+        df["FLAG_OWN_REALTY_Y"] = (df["FLAG_OWN_REALTY"] == "Y").astype(int)
+    return df
+
+
+# --------------------------------------------
 #  Champion Model: Feature Engineering
 # --------------------------------------------
 
@@ -62,14 +90,20 @@ def engineer_champion_features(df: pd.DataFrame) -> pd.DataFrame:
 def prepare_champion_input(df: pd.DataFrame) -> pd.DataFrame:
     """
     Prepare a DataFrame for Champion model prediction.
-    
+
     Steps:
       1. Engineer derived features
       2. Select only the 20 features in FEATURE_ORDER
       3. Fill any remaining NaN values with 0
-    
-    Returns a DataFrame with exactly the columns the model expects,
-    in the correct order.
+
+    Returns a DataFrame with exactly the columns the model expects, in the
+    correct order. Any feature missing from the input entirely (e.g. a raw,
+    unrenamed Kaggle CSV upload) is filled with 0 rather than rejected --
+    callers that need to surface this to an end user (main.py's endpoints)
+    can read the missing feature names back via `result.attrs["missing_features"]`,
+    a plain list attached via pandas' per-DataFrame metadata dict. This is a
+    non-breaking way to add a warning signal without changing the return type
+    for the training script and existing tests, which don't need it.
     """
     # Step 1: Compute engineered features from raw columns
     df = engineer_champion_features(df)
@@ -80,16 +114,19 @@ def prepare_champion_input(df: pd.DataFrame) -> pd.DataFrame:
         raise ValueError("Feature order not loaded -- check features.txt")
 
     result = pd.DataFrame()
+    missing_features = []
     for feat in feature_order:
         if feat in df.columns:
             result[feat] = df[feat].values
         else:
             # Missing column -> fill with 0 (safe default for numeric features)
             print(f"[preprocess] Warning: '{feat}' missing from input, filling with 0")
+            missing_features.append(feat)
             result[feat] = 0.0
 
     # Step 3: Fill any remaining NaN
     result = result.fillna(0.0)
+    result.attrs["missing_features"] = missing_features
 
     return result
 
@@ -120,10 +157,15 @@ def engineer_challenger_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = engineer_champion_features(df)  # Ensure base features exist
     mapped = pd.DataFrame()
+    missing_features = []
 
     # Direct mappings
     mapped["Income"] = df.get("AMT_INCOME_TOTAL", pd.Series(dtype=float)).fillna(150000)
+    if "AMT_INCOME_TOTAL" not in df.columns:
+        missing_features.append("Income (from AMT_INCOME_TOTAL)")
     mapped["LoanAmount"] = df.get("AMT_CREDIT_x", pd.Series(dtype=float)).fillna(500000)
+    if "AMT_CREDIT_x" not in df.columns:
+        missing_features.append("LoanAmount (from AMT_CREDIT_x)")
 
     # Age: use engineered 'age' column
     if "age" in df.columns:
@@ -132,6 +174,7 @@ def engineer_challenger_features(df: pd.DataFrame) -> pd.DataFrame:
         mapped["Age"] = df["DAYS_BIRTH"].abs() / 365.0
     else:
         mapped["Age"] = 35.0
+        missing_features.append("Age (from age/DAYS_BIRTH)")
 
     # EmploymentYears: convert DAYS_EMPLOYED (negative integer) to years
     if "DAYS_EMPLOYED" in df.columns:
@@ -140,6 +183,7 @@ def engineer_challenger_features(df: pd.DataFrame) -> pd.DataFrame:
         mapped["EmploymentYears"] = mapped["EmploymentYears"].clip(upper=50)
     else:
         mapped["EmploymentYears"] = 5.0
+        missing_features.append("EmploymentYears (from DAYS_EMPLOYED)")
 
     # income_loan_ratio: same as income_credit_ratio
     if "income_credit_ratio" in df.columns:
@@ -157,6 +201,7 @@ def engineer_challenger_features(df: pd.DataFrame) -> pd.DataFrame:
         mapped["CreditScore"] = 300 + (avg_ext * 550)  # Scale 0-1 -> 300-850
     else:
         mapped["CreditScore"] = 650.0
+        missing_features.append("CreditScore (from EXT_SOURCE_1/2/3)")
 
     # DTI (Debt-to-Income): monthly annuity / monthly income
     monthly_income = mapped["Income"] / 12.0
@@ -166,6 +211,7 @@ def engineer_challenger_features(df: pd.DataFrame) -> pd.DataFrame:
         ).fillna(0.35)
     else:
         mapped["DTI"] = 0.35
+        missing_features.append("DTI (from AMT_ANNUITY)")
 
     # loan_dti_ratio
     mapped["loan_dti_ratio"] = (
@@ -174,6 +220,7 @@ def engineer_challenger_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # Fill remaining NaN
     mapped = mapped.fillna(0.0)
+    mapped.attrs["missing_features"] = missing_features
     return mapped
 
 
@@ -183,13 +230,16 @@ def prepare_challenger_input(df: pd.DataFrame) -> pd.DataFrame:
     currently-loaded Challenger model's expected column order.
     """
     mapped = engineer_challenger_features(df)
+    missing_features = mapped.attrs.get("missing_features", [])
 
     challenger_order = list(config.GERMAN_MODEL.feature_names_in_)
     for feat in challenger_order:
         if feat not in mapped.columns:
             mapped[feat] = 0.0
 
-    return mapped[challenger_order]
+    result = mapped[challenger_order]
+    result.attrs["missing_features"] = missing_features  # column selection doesn't reliably preserve .attrs
+    return result
 
 
 def get_risk_label(probability: float) -> str:

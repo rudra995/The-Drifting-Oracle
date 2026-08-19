@@ -30,6 +30,16 @@ def client(monkeypatch):
     import databricks_io
     monkeypatch.setattr(databricks_io, "ENABLED", False)
 
+    # Never let a test actually trigger a retrain. maybe_trigger_retrain()
+    # spawns a background thread that (a) runs continual_retrain's corpus
+    # growth against real local CSVs and (b) shells out to scripts/train.py,
+    # which -- in its own fresh subprocess -- imports databricks_io itself
+    # and would write to the REAL Databricks workspace on any machine whose
+    # .env has real credentials, since the ENABLED=False patch above only
+    # applies to this pytest process, not a subprocess it spawns.
+    import retrain
+    monkeypatch.setattr(retrain, "maybe_trigger_retrain", lambda *a, **kw: None)
+
     # Deterministic, fast, offline LLM responses -- a test shouldn't depend on
     # a local Ollama instance or a real Gemini key being reachable.
     import llm_explanation

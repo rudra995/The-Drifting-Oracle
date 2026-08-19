@@ -16,9 +16,11 @@ joblib
 google-genai
 requests
 sentence-transformers
+chromadb
 torch
 mlflow
 prefect
+langgraph
 
 # Dev-only: for scripts/train.py's one-time raw data download from Kaggle
 kaggle

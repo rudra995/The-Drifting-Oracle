@@ -251,7 +251,10 @@ export default function DriftDetectionPage() {
  </thead>
  <tbody className="text-sm divide-y divide-outline-variant/10 font-bold">
  {features.map((f) => {
- const isCritical = f.psi_score > 0.1;
+ // 0.25 matches the documented PSI "significant shift" band (config.py) --
+ // was 0.1 ("moderate" band), which mislabeled a merely-moderate feature
+ // shift as "Critical" against the system's own stated methodology.
+ const isCritical = f.psi_score >= 0.25;
  return (
  <tr key={f.feature_name} className={`${isCritical ? 'bg-error/5 hover:bg-error/10' : 'hover:bg-primary-container/10'} transition-colors group`}>
  <td className="px-6 py-4 font-mono text-on-surface group-hover:text-primary transition-colors">{f.feature_name}</td>
@@ -306,7 +309,7 @@ export default function DriftDetectionPage() {
  <div className="h-64 flex items-end gap-3 px-2 border-b border-surface-container pb-2">
  {features.map((f, i) => {
  const heightPct = Math.min((f.psi_score / 0.5) * 100, 100);
- const significant = f.psi_score > 0.1;
+ const significant = f.psi_score >= 0.25; // see isCritical above -- same documented threshold
  return (
  <div
  key={f.feature_name}

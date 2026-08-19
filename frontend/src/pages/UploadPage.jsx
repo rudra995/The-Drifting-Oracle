@@ -599,7 +599,7 @@ export default function UploadPage() {
  <thead>
  <tr className="bg-surface-container-highest/50">
  <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-outline">ID</th>
- <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-outline">Probability</th>
+ <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-outline">Default Probability</th>
  <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-outline">Risk Label</th>
  <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-outline">Decision</th>
  </tr>
@@ -616,7 +616,7 @@ export default function UploadPage() {
  style={{ width: `${pred.probability * 100}%` }}
  />
  </div>
- {pred.probability}
+ {(pred.probability * 100).toFixed(1)}%
  </div>
  </td>
  <td className="px-6 py-3">
