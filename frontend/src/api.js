@@ -8,6 +8,12 @@
 // dev, which is unaffected when the env var isn't set.
 export const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
+// Only set on deployments where the backend's API_KEY env var is
+// configured (see backend/config.py's Auth section) -- undefined here is
+// the normal local-dev case and simply sends no header, matching the
+// backend's no-op-when-unset default.
+const API_KEY = import.meta.env.VITE_API_KEY;
+
 /**
  * Fetch data from the backend API.
  * @param {string} endpoint - The API endpoint path (e.g. '/api/v1/models')
@@ -20,6 +26,7 @@ export async function fetchApi(endpoint, options = {}) {
 
   const defaultHeaders = {
     'Content-Type': 'application/json',
+    ...(API_KEY ? { 'X-API-Key': API_KEY } : {}),
   };
 
   const config = {

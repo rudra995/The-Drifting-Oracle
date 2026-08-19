@@ -10,6 +10,11 @@ COPY . .
 # since the browser hits a host-mapped port either way).
 ARG VITE_API_BASE=""
 ENV VITE_API_BASE=${VITE_API_BASE}
+# Only needed if the backend's API_KEY env var is set (see
+# backend/config.py's Auth section) -- blank here matches the backend's
+# no-op-when-unset default.
+ARG VITE_API_KEY=""
+ENV VITE_API_KEY=${VITE_API_KEY}
 RUN npm run build
 
 # --- Serve stage ---

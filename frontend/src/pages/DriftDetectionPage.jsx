@@ -333,13 +333,13 @@ export default function DriftDetectionPage() {
  <div className="flex items-center gap-2">
  <div className="w-3 h-3 bg-error rounded-sm shadow-[0_0_5px_rgba(255, 68, 68,0.5)]"></div>
  <span className="text-[10px] font-bold text-on-surface uppercase tracking-widest">
- Significant (&gt;0.1)
+ Significant (&gt;0.25)
  </span>
  </div>
  <div className="flex items-center gap-2">
  <div className="w-3 h-3 bg-primary rounded-sm shadow-[0_0_5px_rgba(236, 72, 153,0.3)]"></div>
  <span className="text-[10px] font-bold text-on-surface uppercase tracking-widest">
- Insignificant (&lt;0.1)
+ Insignificant (&lt;0.25)
  </span>
  </div>
  </div>

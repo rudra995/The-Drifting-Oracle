@@ -7,6 +7,7 @@ Architecture:
   - No rolling window -- each batch is compared against the training distribution
   - Model switching: PSI < 0.25 -> Champion, else -> Challenger
 """
+import os
 from datetime import datetime, timezone
 
 import databricks_io
@@ -107,6 +108,19 @@ def get_decision_threshold() -> float:
     (at server startup, via model_loader.load_model_metrics()).
     """
     return MODEL_METRICS.get("champion", {}).get("decision_threshold", DEFAULT_DECISION_THRESHOLD)
+
+
+# --------------------------------------------
+# Auth -- minimal shared-secret API key
+# --------------------------------------------
+# Unset by default so local dev/CI/tests need no configuration -- matches
+# every other credential in this project (Databricks, Gemini) being an
+# opt-in .env value, not a hardcoded requirement. Set API_KEY to actually
+# require the X-API-Key header (see main.py's require_api_key middleware);
+# this is a portfolio-appropriate minimal gate, not a real user-auth system
+# with accounts/sessions -- see docs/interview-prep.pdf's known limitations
+# for why that scope boundary is deliberate.
+API_KEY = os.getenv("API_KEY") or None
 
 # --------------------------------------------
 # Champion -> Challenger Feature Mapping

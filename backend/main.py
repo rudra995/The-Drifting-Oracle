@@ -140,6 +140,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Routes reachable with no key even when API_KEY is set -- health checks
+# need to work for K8s liveness/readiness probes and uptime monitors that
+# were never going to carry a secret, and CORS preflight (OPTIONS) never
+# carries app headers by design, so gating it would just break every
+# cross-origin request before the browser ever sends the real one.
+_AUTH_EXEMPT_PATHS = {"/", "/api/health"}
+
+
+@app.middleware("http")
+async def require_api_key(request, call_next):
+    """Minimal shared-secret gate -- see config.API_KEY's docstring for why
+    this is deliberately not a full user-auth system. A no-op (every
+    request passes) whenever API_KEY is unset, so local dev/CI/tests need
+    zero configuration; the moment an operator sets API_KEY, every route
+    except the health-check exemptions above requires a matching
+    X-API-Key header, closing the "anyone who can reach the API can hit
+    every route" gap named in the project's known limitations.
+    """
+    if (
+        config.API_KEY is not None
+        and request.method != "OPTIONS"
+        and request.url.path not in _AUTH_EXEMPT_PATHS
+        and request.headers.get("x-api-key") != config.API_KEY
+    ):
+        return _error(401, "Missing or invalid X-API-Key header.")
+    return await call_next(request)
+
 
 # ----------------------------------------------
 # Core Prediction Pipeline
